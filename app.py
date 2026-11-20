@@ -12,9 +12,8 @@ st.set_page_config(
 )
 
 # 2. CSS com a cor exata do fundo (#00243d) e estilo dos blocos lado a lado
-st.markdown("""
+css_estilo = """
 <style>
-    /* Fundo azul-marinho exato de imagem.pdf.png */
     [data-testid="stAppViewContainer"] {
         background-color: #00243d;
     }
@@ -26,8 +25,6 @@ st.markdown("""
         padding-bottom: 3rem;
         max-width: 1400px;
     }
-
-    /* Enquadramento do logótipo sem excesso de margem azul */
     .fnp-logo-container {
         width: 360px;
         height: 120px;
@@ -41,8 +38,6 @@ st.markdown("""
         margin-top: -16px;
         display: block;
     }
-
-    /* Título principal branco */
     .fnp-main-title {
         color: #ffffff;
         font-size: 1.8rem;
@@ -50,8 +45,6 @@ st.markdown("""
         margin-top: 0.2rem;
         margin-bottom: 1.2rem;
     }
-
-    /* Cartão de resumo superior (KPI) */
     .kpi-card {
         background-color: #ffffff;
         border-radius: 10px;
@@ -91,8 +84,6 @@ st.markdown("""
         font-size: 0.78rem;
         color: #94a3b8;
     }
-
-    /* Estilização dos botões de navegação lado a lado (Consulta vs Novo Município) */
     div.stButton > button[kind="secondary"] {
         background-color: #1a3a54;
         color: #ffffff;
@@ -117,126 +108,10 @@ st.markdown("""
         font-weight: 700;
         font-size: 0.95rem;
     }
-
-    /* Badge de seção */
     .section-badge {
         display: inline-flex;
         align-items: center;
         gap: 8px;
         background-color: #1a3a54;
         color: #ffffff;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        margin-bottom: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-    }
-
-    /* Cabeçalho escuro acima dos campos/cartões */
-    .field-header-box {
-        background-color: #1a3a54;
-        color: #ffffff;
-        padding: 8px 14px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-
-    /* Caixa branca arredondada de resultado */
-    .data-value-box {
-        background-color: #ffffff;
-        color: #0f172a;
-        padding: 12px 16px;
-        border-radius: 8px;
-        font-size: 0.98rem;
-        font-weight: 700;
-        min-height: 48px;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-        margin-bottom: 14px;
-    }
-
-    /* Ajuste de rótulos dos inputs do Streamlit */
-    label[data-testid="stWidgetLabel"] p {
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 0.9rem !important;
-    }
-    .stCaption p {
-        color: #cbd5e1 !important;
-    }
-    h3 {
-        color: #ffffff !important;
-    }
-    hr {
-        border-color: rgba(255, 255, 255, 0.15) !important;
-    }
-
-    /* Estilização do formulário */
-    [data-testid="stForm"] {
-        background-color: #09304f;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 12px;
-        padding: 20px;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# 3. Carregamento da Planilha Excel
-@st.cache_data
-def carregar_dados():
-    df = pd.read_excel("banco de dados.xlsx", skiprows=1)
-    df.columns = df.columns.astype(str).str.strip()
-    df = df.dropna(how="all")
-    df = df.fillna("Não informado")
-    return df
-
-try:
-    df = carregar_dados()
-except FileNotFoundError:
-    st.error("Arquivo 'banco de dados.xlsx' não encontrado no repositório.")
-    st.stop()
-
-COL_MUNICIPIO    = df.columns[0]  # Município/UF
-COL_TERMO        = df.columns[1]  # Requer assinatura do termo...
-COL_RANKING      = df.columns[2]  # Ranking
-COL_STATUS       = df.columns[3]  # Status
-COL_PARTICIPACAO = df.columns[4]  # Participação
-
-# Inicialização do estado da sessão
-if "modo_operacao" not in st.session_state:
-    st.session_state.modo_operacao = "consulta"
-if "num_contatos" not in st.session_state:
-    st.session_state.num_contatos = 1
-if "registros_salvos" not in st.session_state:
-    st.session_state.registros_salvos = []
-
-# 4. Cabeçalho com o Logótipo Oficial fundido ao fundo (#00243d)
-if os.path.exists("imagem.pdf.png"):
-    with open("imagem.pdf.png", "rb") as img_file:
-        b64_logo = base64.b64encode(img_file.read()).decode()
-    st.markdown(f"""
-    <div class="fnp-logo-container">
-        <img src="data:image/png;base64,{b64_logo}" alt="FNP - Frente Nacional de Prefeitas e Prefeitos">
-    </div>
-    """, unsafe_allow_html=True)
-
-# Linha do Título + Botão Superior Direito
-col_titulo, col_botoes = st.columns([3, 1])
-with col_titulo:
-    st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP</div>', unsafe_allow_html=True)
-with col_botoes:
-    st.write("")
-    if st.button("🔄 Atualizar Base", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
-# 5. Cartão Resumo Superior (KPI único: Municípios Inscritos)
-total_inscritos = len(df)
-
-svg_predio = """
-<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 9
+        padding
