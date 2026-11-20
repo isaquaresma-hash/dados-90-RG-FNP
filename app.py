@@ -11,18 +11,18 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. CSS seguindo fielmente o modelo visual oficial da FNP
+# 2. CSS com o tom exato do fundo da imagem oficial (#04243e)
 st.markdown("""
 <style>
-    /* Fundo azul-marinho escuro idêntico ao banner da FNP */
+    /* Fundo azul-marinho exato de imagem.pdf.png para fundir o logótipo sem bordas */
     [data-testid="stAppViewContainer"] {
-        background-color: #031c30;
+        background-color: #04243e;
     }
     [data-testid="stHeader"] {
         background: rgba(0, 0, 0, 0);
     }
     .block-container {
-        padding-top: 1.5rem;
+        padding-top: 1.2rem;
         padding-bottom: 3rem;
         max-width: 1400px;
     }
@@ -32,11 +32,11 @@ st.markdown("""
         color: #ffffff;
         font-size: 1.75rem;
         font-weight: 700;
-        margin-top: 0.5rem;
+        margin-top: 0.4rem;
         margin-bottom: 1.2rem;
     }
 
-    /* Cartões de resumo superiores (estilo Capitais / Municípios do modelo) */
+    /* Cartões de resumo superiores */
     .kpi-card {
         background-color: #ffffff;
         border-radius: 10px;
@@ -90,24 +90,24 @@ st.markdown("""
         color: #94a3b8;
     }
 
-    /* Badge de seção (estilo "🔍 Consulta e Filtros") */
+    /* Badge de seção */
     .section-badge {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background-color: #1b364d;
+        background-color: #1e3b56;
         color: #ffffff;
         padding: 8px 16px;
         border-radius: 8px;
         font-weight: 600;
         font-size: 0.95rem;
         margin-bottom: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.14);
     }
 
-    /* Cabeçalho escuro acima dos campos/cartões (estilo Porte / UF / Município) */
+    /* Cabeçalho escuro acima dos campos/cartões */
     .field-header-box {
-        background-color: #1b364d;
+        background-color: #1e3b56;
         color: #ffffff;
         padding: 8px 14px;
         border-radius: 6px;
@@ -116,7 +116,7 @@ st.markdown("""
         margin-bottom: 8px;
     }
 
-    /* Caixa branca arredondada de resultado (estilo Classificação "-") */
+    /* Caixa branca arredondada de resultado */
     .data-value-box {
         background-color: #ffffff;
         color: #0f172a;
@@ -131,7 +131,7 @@ st.markdown("""
         margin-bottom: 14px;
     }
 
-    /* Ajuste de rótulos dos inputs do Streamlit para ficarem brancos sobre o fundo escuro */
+    /* Ajuste de rótulos dos inputs do Streamlit */
     label[data-testid="stWidgetLabel"] p {
         color: #ffffff !important;
         font-weight: 600 !important;
@@ -147,9 +147,9 @@ st.markdown("""
         border-color: rgba(255, 255, 255, 0.15) !important;
     }
 
-    /* Estilização do formulário para manter contraste limpo */
+    /* Estilização do formulário */
     [data-testid="stForm"] {
-        background-color: #0b2942;
+        background-color: #0b2d4b;
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
         padding: 20px;
@@ -172,24 +172,23 @@ except FileNotFoundError:
     st.error("Arquivo 'banco de dados.xlsx' não encontrado no repositório.")
     st.stop()
 
-# Mapeamento das 5 colunas da planilha
 COL_MUNICIPIO    = df.columns[0]  # Município/UF
 COL_TERMO        = df.columns[1]  # Requer assinatura do termo...
 COL_RANKING      = df.columns[2]  # Ranking
 COL_STATUS       = df.columns[3]  # Status
 COL_PARTICIPACAO = df.columns[4]  # Participação
 
-# 4. Cabeçalho com o Logótipo Oficial ("imagem.pdf.png") integrado ao fundo
+# 4. Cabeçalho com o Logótipo Oficial ("imagem.pdf.png") ampliado e fundido ao fundo
 if os.path.exists("imagem.pdf.png"):
     with open("imagem.pdf.png", "rb") as img_file:
         b64_logo = base64.b64encode(img_file.read()).decode()
     st.markdown(f"""
-    <div style="margin-bottom: 5px;">
-        <img src="data:image/png;base64,{b64_logo}" style="max-width: 100%; height: auto; max-height: 115px;">
+    <div style="margin-bottom: 8px;">
+        <img src="data:image/png;base64,{b64_logo}" style="width: 100%; max-width: 920px; height: auto; display: block;">
     </div>
     """, unsafe_allow_html=True)
 
-# Linha do Título + Botão Superior Direito (estilo "Atualizar Base" do exemplo)
+# Linha do Título + Botão Superior Direito
 col_titulo, col_botoes = st.columns([3, 1])
 with col_titulo:
     st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP — Consulta e Credenciamento</div>', unsafe_allow_html=True)
@@ -199,7 +198,7 @@ with col_botoes:
         st.cache_data.clear()
         st.rerun()
 
-# 5. Cartões Resumo Superiores (KPIs idênticos aos dois blocos brancos do modelo)
+# 5. Cartões Resumo Superiores (KPIs)
 total_inscritos = len(df)
 total_adimplentes = len(df[df[COL_RANKING].astype(str).str.contains("Adimplente", case=False, na=False)])
 
@@ -228,10 +227,9 @@ with kpi2:
     </div>
     """, unsafe_allow_html=True)
 
-# 6. Seção de Consulta (Estilo "🔍 Consulta e Filtros")
+# 6. Seção de Consulta
 st.markdown('<div class="section-badge">🔍 Consulta de Município</div>', unsafe_allow_html=True)
 
-# Caixa de seleção com barra superior escura ("Município/UF")
 st.markdown('<div class="field-header-box">Município/UF</div>', unsafe_allow_html=True)
 lista_municipios = sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
 
@@ -248,7 +246,6 @@ if municipio_selecionado:
     dados_mun = df[df[COL_MUNICIPIO].astype(str) == municipio_selecionado].iloc[0]
 
     st.write("")
-    # 4 Colunas seguindo exatamente o visual de barra escura + caixa branca arredondada do modelo
     c_termo, c_rank, c_status, c_part = st.columns([1.2, 1, 1.3, 2])
 
     with c_termo:
