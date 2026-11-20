@@ -220,56 +220,88 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# 6. Seção de Consulta
+# 6. Seção de Consulta e Opção de Novo Município
 st.markdown('<div class="section-badge">🔍 Consulta de Município</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="field-header-box">Município/UF</div>', unsafe_allow_html=True)
-lista_municipios = sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
+OPCAO_NOVO = "➕ Cadastrar novo município (não listado)"
+lista_municipios = [OPCAO_NOVO] + sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
 
-municipio_selecionado = st.selectbox(
+selecao = st.selectbox(
     "Selecione o município",
     options=lista_municipios,
     index=None,
-    placeholder="- Digite ou selecione o nome do município -",
+    placeholder="- Digite o nome do município ou selecione 'Cadastrar novo município' -",
     label_visibility="collapsed"
 )
 
-# 7. Exibição dos 4 Dados do Banco e Formulário após a Seleção
-if municipio_selecionado:
-    dados_mun = df[df[COL_MUNICIPIO].astype(str) == municipio_selecionado].iloc[0]
+# Variáveis de controle para município existente ou novo
+municipio_final = None
+val_termo = ""
+val_ranking = ""
+val_status = ""
+val_participacao = ""
+
+# 7. Lógica para Município Novo vs. Município já existente no Excel
+if selecao == OPCAO_NOVO:
+    st.write("")
+    st.markdown('<div class="section-badge">🆕 Dados do Novo Município</div>', unsafe_allow_html=True)
+    
+    c_novo1, c_novo2, c_novo3 = st.columns([2, 1.2, 1.2])
+    c_novo4, c_novo5 = st.columns([1.5, 2.5])
+
+    novo_nome = c_novo1.text_input("Nome do Município/UF *", placeholder="Ex: Palmas/TO")
+    val_termo = c_novo2.selectbox(str(COL_TERMO), ["Sim", "Não", "Não informado"], index=0)
+    val_ranking = c_novo3.text_input(str(COL_RANKING), value="Não filiado / Novo")
+    val_status = c_novo4.text_input(str(COL_STATUS), value="Novo Cadastro")
+    val_participacao = c_novo5.text_input(str(COL_PARTICIPACAO), placeholder="Ex: Reunião Geral / Fóruns")
+
+    if novo_nome.strip():
+        municipio_final = novo_nome.strip()
+    else:
+        st.info("Digite o **Nome do Município/UF** acima para liberar o cadastro de contatos.")
+
+elif selecao:
+    municipio_final = selecao
+    dados_mun = df[df[COL_MUNICIPIO].astype(str) == selecao].iloc[0]
+    val_termo = dados_mun[COL_TERMO]
+    val_ranking = dados_mun[COL_RANKING]
+    val_status = dados_mun[COL_STATUS]
+    val_participacao = dados_mun[COL_PARTICIPACAO]
 
     st.write("")
     c_termo, c_rank, c_status, c_part = st.columns([1.2, 1, 1.3, 2])
 
     with c_termo:
         st.markdown(f'<div class="field-header-box">{COL_TERMO}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{dados_mun[COL_TERMO]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{val_termo}</div>', unsafe_allow_html=True)
 
     with c_rank:
         st.markdown(f'<div class="field-header-box">{COL_RANKING}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{dados_mun[COL_RANKING]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{val_ranking}</div>', unsafe_allow_html=True)
 
     with c_status:
         st.markdown(f'<div class="field-header-box">{COL_STATUS}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{dados_mun[COL_STATUS]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{val_status}</div>', unsafe_allow_html=True)
 
     with c_part:
         st.markdown(f'<div class="field-header-box">{COL_PARTICIPACAO}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{dados_mun[COL_PARTICIPACAO]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{val_participacao}</div>', unsafe_allow_html=True)
 
+# 8. Formulário de Contatos (exibido tanto para municípios do banco quanto para novos)
+if municipio_final:
     st.markdown("---")
 
-    # 8. Controle de Múltiplos Contatos
     if "num_contatos" not in st.session_state:
         st.session_state.num_contatos = 1
     if "registros_salvos" not in st.session_state:
         st.session_state.registros_salvos = []
 
-    if st.session_state.get("ultimo_municipio") != municipio_selecionado:
+    if st.session_state.get("ultimo_municipio") != municipio_final:
         st.session_state.num_contatos = 1
-        st.session_state.ultimo_municipio = municipio_selecionado
+        st.session_state.ultimo_municipio = municipio_final
 
-    st.markdown('<div class="section-badge">📝 Cadastro de Contatos / Representantes</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-badge">📝 Cadastro de Contatos / Representantes — {municipio_final}</div>', unsafe_allow_html=True)
     st.caption("Preencha os dados abaixo. Clique em '+ Adicionar outro contato' para incluir mais representantes deste município.")
 
     col_add, col_rem, _ = st.columns([1.6, 1.6, 5])
@@ -291,18 +323,19 @@ if municipio_selecionado:
             c1, c2, c3 = st.columns([2, 2, 2])
             c4, c5 = st.columns([2, 2])
 
-            nome = c1.text_input("Nome completo *", key=f"nome_{municipio_selecionado}_{i}")
-            cargo = c2.text_input("Cargo *", key=f"cargo_{municipio_selecionado}_{i}")
-            interesse = c3.text_input("Interesse / Pauta", key=f"interesse_{municipio_selecionado}_{i}")
-            email = c4.text_input("E-mail *", key=f"email_{municipio_selecionado}_{i}")
-            telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_selecionado}_{i}")
+            nome = c1.text_input("Nome completo *", key=f"nome_{municipio_final}_{i}")
+            cargo = c2.text_input("Cargo *", key=f"cargo_{municipio_final}_{i}")
+            interesse = c3.text_input("Interesse / Pauta", key=f"interesse_{municipio_final}_{i}")
+            email = c4.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
+            telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
 
             contatos_preenchidos.append({
-                "Município/UF": municipio_selecionado,
-                str(COL_TERMO): dados_mun[COL_TERMO],
-                str(COL_RANKING): dados_mun[COL_RANKING],
-                str(COL_STATUS): dados_mun[COL_STATUS],
-                str(COL_PARTICIPACAO): dados_mun[COL_PARTICIPACAO],
+                "Origem": "Novo Cadastro" if selecao == OPCAO_NOVO else "Base 90ª RG",
+                "Município/UF": municipio_final,
+                str(COL_TERMO): val_termo,
+                str(COL_RANKING): val_ranking,
+                str(COL_STATUS): val_status,
+                str(COL_PARTICIPACAO): val_participacao,
                 "Nome": nome,
                 "Cargo": cargo,
                 "Interesse": interesse,
@@ -321,22 +354,22 @@ if municipio_selecionado:
                 st.warning("Preencha pelo menos o Nome do contato antes de salvar.")
             else:
                 st.session_state.registros_salvos.extend(validos)
-                st.success(f"{len(validos)} contato(s) vinculado(s) a **{municipio_selecionado}** salvo(s) com sucesso!")
+                st.success(f"{len(validos)} contato(s) vinculado(s) a **{municipio_final}** salvo(s) com sucesso!")
 
-    # 9. Tabela de Registros Salvos e Botão de Download Excel
-    if st.session_state.registros_salvos:
-        st.markdown("---")
-        st.markdown('<div class="section-badge">📊 Contatos Registrados nesta Sessão</div>', unsafe_allow_html=True)
-        df_salvos = pd.DataFrame(st.session_state.registros_salvos)
-        st.dataframe(df_salvos, use_container_width=True)
+# 9. Tabela de Registros Salvos e Botão de Download Excel
+if st.session_state.get("registros_salvos"):
+    st.markdown("---")
+    st.markdown('<div class="section-badge">📊 Contatos Registrados nesta Sessão</div>', unsafe_allow_html=True)
+    df_salvos = pd.DataFrame(st.session_state.registros_salvos)
+    st.dataframe(df_salvos, use_container_width=True)
 
-        buffer = BytesIO()
-        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-            df_salvos.to_excel(writer, index=False, sheet_name="Contatos_FNP")
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df_salvos.to_excel(writer, index=False, sheet_name="Contatos_FNP")
 
-        st.download_button(
-            label="📥 Baixar Planilha com Contatos Cadastrados (.xlsx)",
-            data=buffer.getvalue(),
-            file_name="contatos_90_reuniao_fnp.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+    st.download_button(
+        label="📥 Baixar Planilha com Contatos Cadastrados (.xlsx)",
+        data=buffer.getvalue(),
+        file_name="contatos_90_reuniao_fnp.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
