@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import base64
+import os
 
 # 1. Configuração da Página
 st.set_page_config(
@@ -9,7 +11,41 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Estilos HTML / CSS Personalizados
+# 2. Função para aplicar "imagem.pdf.png" como fundo da plataforma
+def definir_fundo(caminho_imagem):
+    if os.path.exists(caminho_imagem):
+        with open(caminho_imagem, "rb") as img_file:
+            b64_string = base64.b64encode(img_file.read()).decode()
+        
+        st.markdown(f"""
+        <style>
+            /* Aplica a imagem cobrindo toda a tela */
+            [data-testid="stAppViewContainer"] {{
+                background-image: url("data:image/png;base64,{b64_string}");
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }}
+            /* Deixa a barra superior transparente */
+            [data-testid="stHeader"] {{
+                background: rgba(0, 0, 0, 0);
+            }}
+            /* Cria um painel branco translúcido atrás do conteúdo para garantir leitura perfeita */
+            .block-container {{
+                background-color: rgba(255, 255, 255, 0.92);
+                padding: 2.5rem 3rem;
+                border-radius: 16px;
+                margin-top: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+            }}
+        </style>
+        """, unsafe_allow_html=True)
+
+definir_fundo("imagem.pdf.png")
+
+# 3. Estilos HTML / CSS Personalizados
 st.markdown("""
 <style>
     .fnp-header {
@@ -35,7 +71,7 @@ st.markdown("""
         border-top: 4px solid #16539c;
         border-radius: 8px;
         padding: 16px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.06);
         height: 100%;
     }
     .info-label {
@@ -59,13 +95,12 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3. Carregamento da Planilha Excel pulando a linha 1
+# 4. Carregamento da Planilha Excel pulando a linha 1
 @st.cache_data
 def carregar_dados():
     df = pd.read_excel("banco de dados.xlsx", skiprows=1)
     df.columns = df.columns.astype(str).str.strip()
     df = df.dropna(how="all")
-    # Substitui células em branco (como Status vazio) por "Não informado"
     df = df.fillna("Não informado")
     return df
 
@@ -82,7 +117,7 @@ COL_RANKING      = df.columns[2]  # Ranking
 COL_STATUS       = df.columns[3]  # Status
 COL_PARTICIPACAO = df.columns[4]  # Participação
 
-# 4. Campo de Busca por Município/UF
+# 5. Campo de Busca por Município/UF
 st.subheader("🔍 Consulta de Município/UF")
 lista_municipios = sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
 
@@ -93,7 +128,7 @@ municipio_selecionado = st.selectbox(
     placeholder="Ex: Águas Lindas de Goiás/GO, Alvorada/RS, Amparo/SP..."
 )
 
-# 5. Exibição dos Dados e Formulário Dinâmico após a Busca
+# 6. Exibição dos Dados e Formulário Dinâmico após a Busca
 if municipio_selecionado:
     dados_mun = df[df[COL_MUNICIPIO].astype(str) == municipio_selecionado].iloc[0]
 
@@ -135,7 +170,7 @@ if municipio_selecionado:
 
     st.markdown("---")
 
-    # 6. Controle de Múltiplos Contatos na Memória da Sessão
+    # 7. Controle de Múltiplos Contatos na Memória da Sessão
     if "num_contatos" not in st.session_state:
         st.session_state.num_contatos = 1
     if "registros_salvos" not in st.session_state:
@@ -200,7 +235,7 @@ if municipio_selecionado:
                 st.session_state.registros_salvos.extend(validos)
                 st.success(f"{len(validos)} contato(s) vinculado(s) a **{municipio_selecionado}** salvo(s) com sucesso!")
 
-    # 7. Visualização e Exportação dos Contatos Cadastrados
+    # 8. Visualização e Exportação dos Contatos Cadastrados
     if st.session_state.registros_salvos:
         st.markdown("---")
         st.subheader("📊 Contatos Registrados nesta Sessão")
