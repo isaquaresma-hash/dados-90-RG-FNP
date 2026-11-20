@@ -47,33 +47,3 @@ try:
 except FileNotFoundError:
     st.error("Arquivo 'banco de dados.xlsx' não encontrado no repositório.")
     st.stop()
-
-COL_MUNICIPIO = df.columns[0]
-COL_TERMO = df.columns[1]
-COL_RANKING = df.columns[2]
-COL_STATUS = df.columns[3]
-COL_PARTICIPACAO = df.columns[4]
-
-if "modo_operacao" not in st.session_state:
-    st.session_state.modo_operacao = "consulta"
-if "num_contatos" not in st.session_state:
-    st.session_state.num_contatos = 1
-if "registros_salvos" not in st.session_state:
-    st.session_state.registros_salvos = []
-
-if os.path.exists("imagem.pdf.png"):
-    with open("imagem.pdf.png", "rb") as img_file:
-        b64_logo = base64.b64encode(img_file.read()).decode()
-    st.markdown(f'<div class="fnp-logo-container"><img src="data:image/png;base64,{b64_logo}" alt="FNP"></div>', unsafe_allow_html=True)
-
-col_titulo, col_botoes = st.columns([3, 1])
-with col_titulo:
-    st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP</div>', unsafe_allow_html=True)
-with col_botoes:
-    st.write("")
-    if st.button("🔄 Atualizar Base", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
-total_inscritos = len(df)
-svg_predio = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M
