@@ -11,33 +11,35 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. CSS com integração perfeita do logótipo e ícones vetoriais limpos
+# 2. CSS com a cor exata do fundo da imagem (#00243d) e enquadramento limpo do logótipo
 st.markdown("""
 <style>
-    /* Fundo azul-marinho institucional */
+    /* Fundo azul-marinho exato de imagem.pdf.png para fundir o logótipo sem bordas */
     [data-testid="stAppViewContainer"] {
-        background-color: #031c30;
+        background-color: #00243d;
     }
     [data-testid="stHeader"] {
         background: rgba(0, 0, 0, 0);
     }
     .block-container {
-        padding-top: 1rem;
+        padding-top: 1.2rem;
         padding-bottom: 3rem;
         max-width: 1400px;
     }
 
-    /* Faz o logótipo crescer e fundir o fundo escuro perfeitamente */
+    /* Enquadramento do logótipo sem excesso de margem azul */
     .fnp-logo-container {
-        width: 100%;
-        margin-bottom: 0.2rem;
+        width: 360px;
+        height: 120px;
+        overflow: hidden;
+        margin-bottom: 0.3rem;
     }
     .fnp-logo-container img {
-        width: 100%;
-        max-width: 1380px;
-        height: auto;
+        width: 1200px;
+        max-width: none;
+        margin-left: -20px;
+        margin-top: -16px;
         display: block;
-        mix-blend-mode: lighten;
     }
 
     /* Título principal branco */
@@ -106,7 +108,7 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background-color: #1b364d;
+        background-color: #1a3a54;
         color: #ffffff;
         padding: 8px 16px;
         border-radius: 8px;
@@ -118,7 +120,7 @@ st.markdown("""
 
     /* Cabeçalho escuro acima dos campos/cartões */
     .field-header-box {
-        background-color: #1b364d;
+        background-color: #1a3a54;
         color: #ffffff;
         padding: 8px 14px;
         border-radius: 6px;
@@ -160,7 +162,7 @@ st.markdown("""
 
     /* Estilização do formulário */
     [data-testid="stForm"] {
-        background-color: #0b2942;
+        background-color: #09304f;
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
         padding: 20px;
@@ -189,7 +191,7 @@ COL_RANKING      = df.columns[2]  # Ranking
 COL_STATUS       = df.columns[3]  # Status
 COL_PARTICIPACAO = df.columns[4]  # Participação
 
-# 4. Cabeçalho com o Logótipo Oficial ampliado e sem bordas
+# 4. Cabeçalho com o Logótipo Oficial fundido ao fundo (#00243d)
 if os.path.exists("imagem.pdf.png"):
     with open("imagem.pdf.png", "rb") as img_file:
         b64_logo = base64.b64encode(img_file.read()).decode()
@@ -209,11 +211,10 @@ with col_botoes:
         st.cache_data.clear()
         st.rerun()
 
-# 5. Cartões Resumo Superiores (KPIs) com ícones vetoriais SVG limpos
+# 5. Cartões Resumo Superiores (KPIs) com ícones vetoriais SVG
 total_inscritos = len(df)
 total_adimplentes = len(df[df[COL_RANKING].astype(str).str.contains("Adimplente", case=False, na=False)])
 
-# Ícones SVG minimalistas brancos
 svg_predio = """
 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M9 12h.01"/><path d="M15 12h.01"/>
