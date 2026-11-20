@@ -6,7 +6,7 @@ import os
 
 # 1. Configuração da Página
 st.set_page_config(
-    page_title="90ª Reunião Geral da FNP - Consulta e Credenciamento",
+    page_title="90ª Reunião Geral da FNP",
     page_icon="🏛️",
     layout="wide"
 )
@@ -51,7 +51,7 @@ st.markdown("""
         margin-bottom: 1.2rem;
     }
 
-    /* Cartões de resumo superiores (KPIs) */
+    /* Cartão de resumo superior (KPI) */
     .kpi-card {
         background-color: #ffffff;
         border-radius: 10px;
@@ -64,17 +64,6 @@ st.markdown("""
     }
     .kpi-icon-blue {
         background-color: #1e40af;
-        color: #ffffff;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    .kpi-icon-green {
-        background-color: #059669;
         color: #ffffff;
         width: 48px;
         height: 48px;
@@ -204,16 +193,15 @@ if os.path.exists("imagem.pdf.png"):
 # Linha do Título + Botão Superior Direito
 col_titulo, col_botoes = st.columns([3, 1])
 with col_titulo:
-    st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP — Consulta e Credenciamento</div>', unsafe_allow_html=True)
+    st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP</div>', unsafe_allow_html=True)
 with col_botoes:
     st.write("")
     if st.button("🔄 Atualizar Base", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-# 5. Cartões Resumo Superiores (KPIs) com ícones vetoriais SVG
+# 5. Cartão Resumo Superior (KPI único: Municípios Inscritos)
 total_inscritos = len(df)
-total_adimplentes = len(df[df[COL_RANKING].astype(str).str.contains("Adimplente", case=False, na=False)])
 
 svg_predio = """
 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -221,37 +209,16 @@ svg_predio = """
 </svg>
 """
 
-svg_adimplente = """
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-  <path d="m9 12 2 2 4-4"/>
-</svg>
-"""
-
-kpi1, kpi2 = st.columns(2)
-with kpi1:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-icon-blue">{svg_predio}</div>
-        <div>
-            <div class="kpi-label">MUNICÍPIOS INSCRITOS</div>
-            <div class="kpi-number">{total_inscritos}</div>
-            <div class="kpi-sub">Total registrado na 90ª RG (Atualizado em 20/11)</div>
-        </div>
+st.markdown(f"""
+<div class="kpi-card">
+    <div class="kpi-icon-blue">{svg_predio}</div>
+    <div>
+        <div class="kpi-label">MUNICÍPIOS INSCRITOS</div>
+        <div class="kpi-number">{total_inscritos}</div>
+        <div class="kpi-sub">Total registrado na 90ª RG (Atualizado em 20/11)</div>
     </div>
-    """, unsafe_allow_html=True)
-
-with kpi2:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-icon-green">{svg_adimplente}</div>
-        <div>
-            <div class="kpi-label">MUNICÍPIOS ADIMPLENTES</div>
-            <div class="kpi-number">{total_adimplentes}</div>
-            <div class="kpi-sub">Ranking regular na base FNP</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
 # 6. Seção de Consulta
 st.markdown('<div class="section-badge">🔍 Consulta de Município</div>', unsafe_allow_html=True)
