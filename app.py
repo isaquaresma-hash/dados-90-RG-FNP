@@ -11,82 +11,93 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. CSS com o tom exato do fundo da imagem oficial (#04243e)
+# 2. CSS com integração perfeita do logótipo e ícones vetoriais limpos
 st.markdown("""
 <style>
-    /* Fundo azul-marinho exato de imagem.pdf.png para fundir o logótipo sem bordas */
+    /* Fundo azul-marinho institucional */
     [data-testid="stAppViewContainer"] {
-        background-color: #04243e;
+        background-color: #031c30;
     }
     [data-testid="stHeader"] {
         background: rgba(0, 0, 0, 0);
     }
     .block-container {
-        padding-top: 1.2rem;
+        padding-top: 1rem;
         padding-bottom: 3rem;
         max-width: 1400px;
+    }
+
+    /* Faz o logótipo crescer e fundir o fundo escuro perfeitamente */
+    .fnp-logo-container {
+        width: 100%;
+        margin-bottom: 0.2rem;
+    }
+    .fnp-logo-container img {
+        width: 100%;
+        max-width: 1380px;
+        height: auto;
+        display: block;
+        mix-blend-mode: lighten;
     }
 
     /* Título principal branco */
     .fnp-main-title {
         color: #ffffff;
-        font-size: 1.75rem;
+        font-size: 1.8rem;
         font-weight: 700;
-        margin-top: 0.4rem;
+        margin-top: 0.2rem;
         margin-bottom: 1.2rem;
     }
 
-    /* Cartões de resumo superiores */
+    /* Cartões de resumo superiores (KPIs) */
     .kpi-card {
         background-color: #ffffff;
         border-radius: 10px;
-        padding: 16px 22px;
+        padding: 18px 24px;
         display: flex;
         align-items: center;
-        gap: 16px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        gap: 18px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         margin-bottom: 1.5rem;
     }
     .kpi-icon-blue {
         background-color: #1e40af;
-        color: white;
-        width: 44px;
-        height: 44px;
+        color: #ffffff;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
         flex-shrink: 0;
     }
     .kpi-icon-green {
         background-color: #059669;
-        color: white;
-        width: 44px;
-        height: 44px;
+        color: #ffffff;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
         flex-shrink: 0;
     }
     .kpi-label {
-        font-size: 0.72rem;
+        font-size: 0.74rem;
         font-weight: 700;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     .kpi-number {
-        font-size: 1.55rem;
+        font-size: 1.65rem;
         font-weight: 800;
         color: #0f172a;
         line-height: 1.1;
-        margin: 2px 0;
+        margin: 3px 0;
     }
     .kpi-sub {
-        font-size: 0.75rem;
+        font-size: 0.78rem;
         color: #94a3b8;
     }
 
@@ -95,7 +106,7 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background-color: #1e3b56;
+        background-color: #1b364d;
         color: #ffffff;
         padding: 8px 16px;
         border-radius: 8px;
@@ -107,7 +118,7 @@ st.markdown("""
 
     /* Cabeçalho escuro acima dos campos/cartões */
     .field-header-box {
-        background-color: #1e3b56;
+        background-color: #1b364d;
         color: #ffffff;
         padding: 8px 14px;
         border-radius: 6px;
@@ -149,7 +160,7 @@ st.markdown("""
 
     /* Estilização do formulário */
     [data-testid="stForm"] {
-        background-color: #0b2d4b;
+        background-color: #0b2942;
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
         padding: 20px;
@@ -178,13 +189,13 @@ COL_RANKING      = df.columns[2]  # Ranking
 COL_STATUS       = df.columns[3]  # Status
 COL_PARTICIPACAO = df.columns[4]  # Participação
 
-# 4. Cabeçalho com o Logótipo Oficial ("imagem.pdf.png") ampliado e fundido ao fundo
+# 4. Cabeçalho com o Logótipo Oficial ampliado e sem bordas
 if os.path.exists("imagem.pdf.png"):
     with open("imagem.pdf.png", "rb") as img_file:
         b64_logo = base64.b64encode(img_file.read()).decode()
     st.markdown(f"""
-    <div style="margin-bottom: 8px;">
-        <img src="data:image/png;base64,{b64_logo}" style="width: 100%; max-width: 920px; height: auto; display: block;">
+    <div class="fnp-logo-container">
+        <img src="data:image/png;base64,{b64_logo}" alt="FNP - Frente Nacional de Prefeitas e Prefeitos">
     </div>
     """, unsafe_allow_html=True)
 
@@ -198,15 +209,29 @@ with col_botoes:
         st.cache_data.clear()
         st.rerun()
 
-# 5. Cartões Resumo Superiores (KPIs)
+# 5. Cartões Resumo Superiores (KPIs) com ícones vetoriais SVG limpos
 total_inscritos = len(df)
 total_adimplentes = len(df[df[COL_RANKING].astype(str).str.contains("Adimplente", case=False, na=False)])
+
+# Ícones SVG minimalistas brancos
+svg_predio = """
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M9 12h.01"/><path d="M15 12h.01"/>
+</svg>
+"""
+
+svg_adimplente = """
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  <path d="m9 12 2 2 4-4"/>
+</svg>
+"""
 
 kpi1, kpi2 = st.columns(2)
 with kpi1:
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-icon-blue">🏛️</div>
+        <div class="kpi-icon-blue">{svg_predio}</div>
         <div>
             <div class="kpi-label">MUNICÍPIOS INSCRITOS</div>
             <div class="kpi-number">{total_inscritos}</div>
@@ -218,7 +243,7 @@ with kpi1:
 with kpi2:
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-icon-green">✅</div>
+        <div class="kpi-icon-green">{svg_adimplente}</div>
         <div>
             <div class="kpi-label">MUNICÍPIOS ADIMPLENTES</div>
             <div class="kpi-number">{total_adimplentes}</div>
