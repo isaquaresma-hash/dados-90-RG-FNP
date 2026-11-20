@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-import os
 
 # 1. Configuração da Página
 st.set_page_config(
@@ -47,23 +46,27 @@ st.markdown("""
         margin-bottom: 6px;
     }
     .info-value {
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         font-weight: 600;
         color: #1a2530;
+        line-height: 1.4;
     }
 </style>
 
 <div class="fnp-header">
     <h1>🏛️ 90ª Reunião Geral da FNP</h1>
-    <p>Base de Consulta de Municípios e Cadastro de Representantes</p>
+    <p>Municípios inscritos na 90ª RG - Atualizado em 20-11</p>
 </div>
 """, unsafe_allow_html=True)
 
-# 3. Carregamento da Planilha Excel ("banco de dados.xlsx")
+# 3. Carregamento da Planilha Excel pulando a linha 1
 @st.cache_data
 def carregar_dados():
-    df = pd.read_excel("banco de dados.xlsx")
-    df.columns = df.columns.str.strip()  # Remove espaços extras nos nomes das colunas
+    df = pd.read_excel("banco de dados.xlsx", skiprows=1)
+    df.columns = df.columns.astype(str).str.strip()
+    df = df.dropna(how="all")
+    # Substitui células em branco (como Status vazio) por "Não informado"
+    df = df.fillna("Não informado")
     return df
 
 try:
@@ -72,31 +75,22 @@ except FileNotFoundError:
     st.error("Arquivo 'banco de dados.xlsx' não encontrado. Verifique se ele está na mesma pasta do app.py.")
     st.stop()
 
-# ⚠️ AJUSTE AQUI SE OS NOMES DAS COLUNAS DA SUA PLANILHA FOREM DIFERENTES:
-COL_MUNICIPIO    = "Município"
-COL_TERMO        = "Requer assinatura do termo de filiação"
-COL_RANKING      = "Ranking"
-COL_STATUS       = "Status"
-COL_PARTICIPACAO = "Participação"
+# Mapeamento automático das 5 colunas da planilha
+COL_MUNICIPIO    = df.columns[0]  # Município/UF
+COL_TERMO        = df.columns[1]  # Requer assinatura do termo...
+COL_RANKING      = df.columns[2]  # Ranking
+COL_STATUS       = df.columns[3]  # Status
+COL_PARTICIPACAO = df.columns[4]  # Participação
 
-# Verifica se as colunas existem na planilha
-colunas_necessarias = [COL_MUNICIPIO, COL_TERMO, COL_RANKING, COL_STATUS, COL_PARTICIPACAO]
-faltantes = [c for c in colunas_necessarias if c not in df.columns]
-
-if faltantes:
-    st.warning(f"Atenção: As colunas abaixo não foram encontradas na planilha: {faltantes}")
-    st.info(f"Colunas disponíveis no seu Excel: {list(df.columns)}")
-    st.stop()
-
-# 4. Campo de Busca por Município
-st.subheader("🔍 Consulta de Município")
-lista_municipios = sorted(df[COL_MUNICIPIO].dropna().astype(str).unique().tolist())
+# 4. Campo de Busca por Município/UF
+st.subheader("🔍 Consulta de Município/UF")
+lista_municipios = sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
 
 municipio_selecionado = st.selectbox(
     "Digite ou selecione o nome do município:",
     options=lista_municipios,
     index=None,
-    placeholder="Ex: Brasília, São Paulo, Recife..."
+    placeholder="Ex: Águas Lindas de Goiás/GO, Alvorada/RS, Amparo/SP..."
 )
 
 # 5. Exibição dos Dados e Formulário Dinâmico após a Busca
@@ -105,12 +99,12 @@ if municipio_selecionado:
 
     st.markdown(f"### 📋 Situação Institucional: **{municipio_selecionado}**")
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns([1.2, 1, 1.3, 2])
 
     with col1:
         st.markdown(f"""
         <div class="info-card">
-            <div class="info-label">Termo de Filiação</div>
+            <div class="info-label">{COL_TERMO}</div>
             <div class="info-value">{dados_mun[COL_TERMO]}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -118,7 +112,7 @@ if municipio_selecionado:
     with col2:
         st.markdown(f"""
         <div class="info-card">
-            <div class="info-label">Ranking</div>
+            <div class="info-label">{COL_RANKING}</div>
             <div class="info-value">{dados_mun[COL_RANKING]}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -126,7 +120,7 @@ if municipio_selecionado:
     with col3:
         st.markdown(f"""
         <div class="info-card">
-            <div class="info-label">Status</div>
+            <div class="info-label">{COL_STATUS}</div>
             <div class="info-value">{dados_mun[COL_STATUS]}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -134,7 +128,7 @@ if municipio_selecionado:
     with col4:
         st.markdown(f"""
         <div class="info-card">
-            <div class="info-label">Participação</div>
+            <div class="info-label">{COL_PARTICIPACAO}</div>
             <div class="info-value">{dados_mun[COL_PARTICIPACAO]}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -181,11 +175,11 @@ if municipio_selecionado:
             telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_selecionado}_{i}")
 
             contatos_preenchidos.append({
-                "Município": municipio_selecionado,
-                "Termo de Filiação": dados_mun[COL_TERMO],
-                "Ranking": dados_mun[COL_RANKING],
-                "Status": dados_mun[COL_STATUS],
-                "Participação": dados_mun[COL_PARTICIPACAO],
+                "Município/UF": municipio_selecionado,
+                str(COL_TERMO): dados_mun[COL_TERMO],
+                str(COL_RANKING): dados_mun[COL_RANKING],
+                str(COL_STATUS): dados_mun[COL_STATUS],
+                str(COL_PARTICIPACAO): dados_mun[COL_PARTICIPACAO],
                 "Nome": nome,
                 "Cargo": cargo,
                 "Interesse": interesse,
