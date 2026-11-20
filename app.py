@@ -118,6 +118,18 @@ st.markdown("""
         font-size: 0.95rem;
     }
 
+    /* Botões vermelhos de Salvar Cadastro nos formulários */
+    [data-testid="stForm"] button[kind="primary"] {
+        background-color: #ef4444;
+        border: 1px solid #f87171;
+        color: #ffffff;
+    }
+    [data-testid="stForm"] button[kind="primary"]:hover {
+        background-color: #dc2626;
+        border-color: #fca5a5;
+        color: #ffffff;
+    }
+
     /* Badge de seção */
     .section-badge {
         display: inline-flex;
@@ -316,27 +328,53 @@ if st.session_state.modo_operacao == "consulta":
 
 elif st.session_state.modo_operacao == "novo":
     st.markdown('<div class="field-header-box">Dados do Novo Município (não listado na base)</div>', unsafe_allow_html=True)
-    
-    c_novo1, c_novo2 = st.columns([2, 1.5])
-    c_novo3, c_novo4 = st.columns([1.5, 2])
 
-    novo_nome = c_novo1.text_input("Nome do Município/UF *", placeholder="Ex: Palmas/TO")
-    val_ranking = c_novo2.text_input(str(COL_RANKING), value="Não filiado / Novo")
-    val_status = c_novo3.text_input(str(COL_STATUS), value="Novo Cadastro")
-    val_participacao = c_novo4.text_input(str(COL_PARTICIPACAO), placeholder="Ex: Reunião Geral / Fóruns")
-    val_termo = "Não informado"
+    with st.form("form_novo_municipio_fnp", clear_on_submit=False):
+        c_novo1, c_novo2 = st.columns([2, 1.5])
+        c_novo3, c_novo4 = st.columns([1.5, 2])
 
-    obs_novo_municipio = st.text_area(
-        "Observação do Município",
-        placeholder="Digite aqui observações livres sobre este novo município...",
-        height=90,
-        key="obs_novo_mun_input"
-    )
+        novo_nome = c_novo1.text_input("Nome do Município/UF *", placeholder="Ex: Palmas/TO")
+        val_ranking = c_novo2.text_input(str(COL_RANKING), value="Não filiado / Novo")
+        val_status = c_novo3.text_input(str(COL_STATUS), value="Novo Cadastro")
+        val_participacao = c_novo4.text_input(str(COL_PARTICIPACAO), placeholder="Ex: Reunião Geral / Fóruns")
+        val_termo = "Não informado"
+
+        obs_novo_municipio = st.text_area(
+            "Observação do Município",
+            placeholder="Digite aqui observações livres sobre este novo município...",
+            height=90,
+            key="obs_novo_mun_input"
+        )
+
+        salvou_municipio = st.form_submit_button("💾 Salvar Cadastro", type="primary")
+
+        if salvou_municipio:
+            if not novo_nome.strip():
+                st.warning("Preencha o **Nome do Município/UF** antes de salvar o cadastro.")
+            else:
+                if "registros_salvos" not in st.session_state:
+                    st.session_state.registros_salvos = []
+                st.session_state.registros_salvos.append({
+                    "Origem": "Novo Cadastro (Município)",
+                    "Município/UF": novo_nome.strip(),
+                    str(COL_TERMO): val_termo,
+                    str(COL_RANKING): val_ranking,
+                    str(COL_STATUS): val_status,
+                    str(COL_PARTICIPACAO): val_participacao,
+                    "Observação Município": obs_novo_municipio.strip(),
+                    "Nome": "",
+                    "Cargo": "",
+                    "Interesse": "",
+                    "E-mail": "",
+                    "Telefone": "",
+                    "Observação Contatos": ""
+                })
+                st.success(f"Cadastro do município **{novo_nome.strip()}** salvo com sucesso!")
 
     if novo_nome.strip():
         municipio_final = novo_nome.strip()
     else:
-        st.info("Digite o **Nome do Município/UF** acima para liberar o cadastro de contatos.")
+        st.info("Digite o **Nome do Município/UF** acima e clique em **💾 Salvar Cadastro** ou preencha os contatos abaixo.")
 
 # 8. Cadastro de Contatos / Representantes com Observação integrada
 if municipio_final:
@@ -400,7 +438,7 @@ if municipio_final:
             label_visibility="collapsed"
         )
 
-        enviado = st.form_submit_button("💾 Salvar Contatos", type="primary")
+        enviado = st.form_submit_button("💾 Salvar Cadastro", type="primary")
 
         if enviado:
             validos = [c for c in contatos_temp if c["nome"].strip() != ""]
@@ -423,12 +461,12 @@ if municipio_final:
                         "Telefone": c["telefone"],
                         "Observação Contatos": observacao_contatos.strip()
                     })
-                st.success(f"{len(validos)} contato(s) vinculado(s) a **{municipio_final}** salvo(s) com sucesso!")
+                st.success(f"{len(validos)} registro(s) vinculado(s) a **{municipio_final}** salvo(s) com sucesso!")
 
 # 9. Tabela de Registros Salvos e Botão de Download Excel
 if st.session_state.get("registros_salvos"):
     st.markdown("---")
-    st.markdown('<div class="section-badge">📊 Contatos Registrados nesta Sessão</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-badge">📊 Registros Salvos nesta Sessão</div>', unsafe_allow_html=True)
     df_salvos = pd.DataFrame(st.session_state.registros_salvos)
     st.dataframe(df_salvos, use_container_width=True)
 
@@ -437,8 +475,8 @@ if st.session_state.get("registros_salvos"):
         df_salvos.to_excel(writer, index=False, sheet_name="Contatos_FNP")
 
     st.download_button(
-        label="📥 Baixar Planilha com Contatos Cadastrados (.xlsx)",
+        label="📥 Baixar Planilha com Registros Cadastrados (.xlsx)",
         data=buffer.getvalue(),
-        file_name="contatos_90_reuniao_fnp.xlsx",
+        file_name="cadastros_90_reuniao_fnp.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
