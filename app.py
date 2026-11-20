@@ -11,10 +11,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. CSS com a cor exata do fundo da imagem (#00243d) e enquadramento limpo do logótipo
+# 2. CSS com a cor exata do fundo (#00243d) e estilo dos blocos lado a lado
 st.markdown("""
 <style>
-    /* Fundo azul-marinho exato de imagem.pdf.png para fundir o logótipo sem bordas */
+    /* Fundo azul-marinho exato de imagem.pdf.png */
     [data-testid="stAppViewContainer"] {
         background-color: #00243d;
     }
@@ -90,6 +90,32 @@ st.markdown("""
     .kpi-sub {
         font-size: 0.78rem;
         color: #94a3b8;
+    }
+
+    /* Estilização dos botões de navegação lado a lado (Consulta vs Novo Município) */
+    div.stButton > button[kind="secondary"] {
+        background-color: #1a3a54;
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        padding: 10px 18px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    div.stButton > button[kind="secondary"]:hover {
+        background-color: #244e70;
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #ffffff;
+    }
+    div.stButton > button[kind="primary"] {
+        background-color: #2563eb;
+        color: #ffffff;
+        border: 1px solid #60a5fa;
+        border-radius: 8px;
+        padding: 10px 18px;
+        font-weight: 700;
+        font-size: 0.95rem;
     }
 
     /* Badge de seção */
@@ -220,20 +246,25 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# 6. Seção de Consulta e Opção de Novo Município
-st.markdown('<div class="section-badge">🔍 Consulta de Município</div>', unsafe_allow_html=True)
+# 6. Dois Blocos Lado a Lado: "🔍 Consulta de Município" e "➕ Cadastrar novo município (não listado)"
+if "modo_operacao" not in st.session_state:
+    st.session_state.modo_operacao = "consulta"
 
-st.markdown('<div class="field-header-box">Município/UF</div>', unsafe_allow_html=True)
-OPCAO_NOVO = "➕ Cadastrar novo município (não listado)"
-lista_municipios = [OPCAO_NOVO] + sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
+col_btn1, col_btn2, _ = st.columns([1.8, 2.5, 4])
 
-selecao = st.selectbox(
-    "Selecione o município",
-    options=lista_municipios,
-    index=None,
-    placeholder="- Digite o nome do município ou selecione 'Cadastrar novo município' -",
-    label_visibility="collapsed"
-)
+with col_btn1:
+    tipo_consulta = "primary" if st.session_state.modo_operacao == "consulta" else "secondary"
+    if st.button("🔍 Consulta de Município", type=tipo_consulta, use_container_width=True):
+        st.session_state.modo_operacao = "consulta"
+        st.rerun()
+
+with col_btn2:
+    tipo_novo = "primary" if st.session_state.modo_operacao == "novo" else "secondary"
+    if st.button("➕ Cadastrar novo município (não listado)", type=tipo_novo, use_container_width=True):
+        st.session_state.modo_operacao = "novo"
+        st.rerun()
+
+st.write("")
 
 # Variáveis de controle para município existente ou novo
 municipio_final = None
@@ -242,10 +273,48 @@ val_ranking = ""
 val_status = ""
 val_participacao = ""
 
-# 7. Lógica para Município Novo vs. Município já existente no Excel
-if selecao == OPCAO_NOVO:
-    st.write("")
-    st.markdown('<div class="section-badge">🆕 Dados do Novo Município</div>', unsafe_allow_html=True)
+# 7. Exibição conforme o bloco selecionado
+if st.session_state.modo_operacao == "consulta":
+    st.markdown('<div class="field-header-box">Município/UF</div>', unsafe_allow_html=True)
+    lista_municipios = sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
+
+    selecao = st.selectbox(
+        "Selecione o município",
+        options=lista_municipios,
+        index=None,
+        placeholder="- Digite ou selecione o nome do município na base -",
+        label_visibility="collapsed"
+    )
+
+    if selecao:
+        municipio_final = selecao
+        dados_mun = df[df[COL_MUNICIPIO].astype(str) == selecao].iloc[0]
+        val_termo = dados_mun[COL_TERMO]
+        val_ranking = dados_mun[COL_RANKING]
+        val_status = dados_mun[COL_STATUS]
+        val_participacao = dados_mun[COL_PARTICIPACAO]
+
+        st.write("")
+        c_termo, c_rank, c_status, c_part = st.columns([1.2, 1, 1.3, 2])
+
+        with c_termo:
+            st.markdown(f'<div class="field-header-box">{COL_TERMO}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="data-value-box">{val_termo}</div>', unsafe_allow_html=True)
+
+        with c_rank:
+            st.markdown(f'<div class="field-header-box">{COL_RANKING}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="data-value-box">{val_ranking}</div>', unsafe_allow_html=True)
+
+        with c_status:
+            st.markdown(f'<div class="field-header-box">{COL_STATUS}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="data-value-box">{val_status}</div>', unsafe_allow_html=True)
+
+        with c_part:
+            st.markdown(f'<div class="field-header-box">{COL_PARTICIPACAO}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="data-value-box">{val_participacao}</div>', unsafe_allow_html=True)
+
+elif st.session_state.modo_operacao == "novo":
+    st.markdown('<div class="field-header-box">Dados do Novo Município (não listado na base)</div>', unsafe_allow_html=True)
     
     c_novo1, c_novo2, c_novo3 = st.columns([2, 1.2, 1.2])
     c_novo4, c_novo5 = st.columns([1.5, 2.5])
@@ -260,33 +329,6 @@ if selecao == OPCAO_NOVO:
         municipio_final = novo_nome.strip()
     else:
         st.info("Digite o **Nome do Município/UF** acima para liberar o cadastro de contatos.")
-
-elif selecao:
-    municipio_final = selecao
-    dados_mun = df[df[COL_MUNICIPIO].astype(str) == selecao].iloc[0]
-    val_termo = dados_mun[COL_TERMO]
-    val_ranking = dados_mun[COL_RANKING]
-    val_status = dados_mun[COL_STATUS]
-    val_participacao = dados_mun[COL_PARTICIPACAO]
-
-    st.write("")
-    c_termo, c_rank, c_status, c_part = st.columns([1.2, 1, 1.3, 2])
-
-    with c_termo:
-        st.markdown(f'<div class="field-header-box">{COL_TERMO}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{val_termo}</div>', unsafe_allow_html=True)
-
-    with c_rank:
-        st.markdown(f'<div class="field-header-box">{COL_RANKING}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{val_ranking}</div>', unsafe_allow_html=True)
-
-    with c_status:
-        st.markdown(f'<div class="field-header-box">{COL_STATUS}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{val_status}</div>', unsafe_allow_html=True)
-
-    with c_part:
-        st.markdown(f'<div class="field-header-box">{COL_PARTICIPACAO}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="data-value-box">{val_participacao}</div>', unsafe_allow_html=True)
 
 # 8. Formulário de Contatos (exibido tanto para municípios do banco quanto para novos)
 if municipio_final:
@@ -330,7 +372,7 @@ if municipio_final:
             telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
 
             contatos_preenchidos.append({
-                "Origem": "Novo Cadastro" if selecao == OPCAO_NOVO else "Base 90ª RG",
+                "Origem": "Novo Cadastro" if st.session_state.modo_operacao == "novo" else "Base 90ª RG",
                 "Município/UF": municipio_final,
                 str(COL_TERMO): val_termo,
                 str(COL_RANKING): val_ranking,
