@@ -272,6 +272,7 @@ val_termo = "Não informado"
 val_ranking = ""
 val_status = ""
 val_participacao = ""
+obs_novo_municipio = ""
 
 # 7. Exibição conforme o bloco selecionado
 if st.session_state.modo_operacao == "consulta":
@@ -325,12 +326,19 @@ elif st.session_state.modo_operacao == "novo":
     val_participacao = c_novo4.text_input(str(COL_PARTICIPACAO), placeholder="Ex: Reunião Geral / Fóruns")
     val_termo = "Não informado"
 
+    obs_novo_municipio = st.text_area(
+        "Observação do Município",
+        placeholder="Digite aqui observações livres sobre este novo município...",
+        height=90,
+        key="obs_novo_mun_input"
+    )
+
     if novo_nome.strip():
         municipio_final = novo_nome.strip()
     else:
-        st.info("Digite o **Nome do Município/UF** acima para liberar o cadastro de contatos e observações.")
+        st.info("Digite o **Nome do Município/UF** acima para liberar o cadastro de contatos.")
 
-# 8. Cadastro de Contatos / Representantes com Observação integrada (extensão da seção)
+# 8. Cadastro de Contatos / Representantes com Observação integrada
 if municipio_final:
     st.markdown("---")
 
@@ -348,89 +356,3 @@ if municipio_final:
 
     col_add, col_rem, _ = st.columns([1.6, 1.6, 5])
     with col_add:
-        if st.button("➕ Adicionar outro contato", use_container_width=True):
-            st.session_state.num_contatos += 1
-            st.rerun()
-    with col_rem:
-        if st.session_state.num_contatos > 1:
-            if st.button("➖ Remover último", use_container_width=True):
-                st.session_state.num_contatos -= 1
-                st.rerun()
-
-    with st.form("form_contatos_fnp", clear_on_submit=False):
-        contatos_temp = []
-
-        for i in range(st.session_state.num_contatos):
-            st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
-            c1, c2, c3 = st.columns([2, 2, 2])
-            c4, c5 = st.columns([2, 2])
-
-            nome = c1.text_input("Nome completo *", key=f"nome_{municipio_final}_{i}")
-            cargo = c2.text_input("Cargo *", key=f"cargo_{municipio_final}_{i}")
-            interesse = c3.text_input("Interesse / Pauta", key=f"interesse_{municipio_final}_{i}")
-            email = c4.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
-            telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
-
-            contatos_temp.append({
-                "nome": nome,
-                "cargo": cargo,
-                "interesse": interesse,
-                "email": email,
-                "telefone": telefone
-            })
-
-            if i < st.session_state.num_contatos - 1:
-                st.write("")
-
-        # Extensão integrada do bloco de Cadastro de Contatos / Representantes e Novo Município
-        st.write("")
-        st.markdown('<div class="field-header-box">Observação (extensão do cadastro)</div>', unsafe_allow_html=True)
-        observacao_texto = st.text_area(
-            "Observação",
-            placeholder="Digite aqui observações livres sobre os contatos ou sobre o município...",
-            height=100,
-            key=f"obs_{municipio_final}",
-            label_visibility="collapsed"
-        )
-
-        enviado = st.form_submit_button("💾 Salvar Contatos", type="primary")
-
-        if enviado:
-            validos = [c for c in contatos_temp if c["nome"].strip() != ""]
-            if not validos:
-                st.warning("Preencha pelo menos o Nome do contato antes de salvar.")
-            else:
-                for c in validos:
-                    st.session_state.registros_salvos.append({
-                        "Origem": "Novo Cadastro" if st.session_state.modo_operacao == "novo" else "Base 90ª RG",
-                        "Município/UF": municipio_final,
-                        str(COL_TERMO): val_termo,
-                        str(COL_RANKING): val_ranking,
-                        str(COL_STATUS): val_status,
-                        str(COL_PARTICIPACAO): val_participacao,
-                        "Nome": c["nome"],
-                        "Cargo": c["cargo"],
-                        "Interesse": c["interesse"],
-                        "E-mail": c["email"],
-                        "Telefone": c["telefone"],
-                        "Observação": observacao_texto.strip()
-                    })
-                st.success(f"{len(validos)} contato(s) e observação vinculados a **{municipio_final}** salvos com sucesso!")
-
-# 9. Tabela de Registros Salvos e Botão de Download Excel
-if st.session_state.get("registros_salvos"):
-    st.markdown("---")
-    st.markdown('<div class="section-badge">📊 Contatos Registrados nesta Sessão</div>', unsafe_allow_html=True)
-    df_salvos = pd.DataFrame(st.session_state.registros_salvos)
-    st.dataframe(df_salvos, use_container_width=True)
-
-    buffer = BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df_salvos.to_excel(writer, index=False, sheet_name="Contatos_FNP")
-
-    st.download_button(
-        label="📥 Baixar Planilha com Contatos Cadastrados (.xlsx)",
-        data=buffer.getvalue(),
-        file_name="contatos_90_reuniao_fnp.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
