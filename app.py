@@ -328,20 +328,10 @@ elif st.session_state.modo_operacao == "novo":
     if novo_nome.strip():
         municipio_final = novo_nome.strip()
     else:
-        st.info("Digite o **Nome do Município/UF** acima para liberar a caixa de observação e o cadastro de contatos.")
+        st.info("Digite o **Nome do Município/UF** acima para liberar o cadastro de contatos e observações.")
 
-# 8. Caixa de Observação e Formulário de Contatos (só abrem após consultar ou cadastrar município)
+# 8. Cadastro de Contatos / Representantes com Observação integrada (extensão da seção)
 if municipio_final:
-    st.write("")
-    st.markdown('<div class="field-header-box">Observação</div>', unsafe_allow_html=True)
-    observacao_texto = st.text_area(
-        "Observação",
-        placeholder="Digite aqui qualquer observação ou anotação livre referente a este município...",
-        height=100,
-        key=f"obs_{municipio_final}",
-        label_visibility="collapsed"
-    )
-
     st.markdown("---")
 
     if "num_contatos" not in st.session_state:
@@ -368,7 +358,7 @@ if municipio_final:
                 st.rerun()
 
     with st.form("form_contatos_fnp", clear_on_submit=False):
-        contatos_preenchidos = []
+        contatos_temp = []
 
         for i in range(st.session_state.num_contatos):
             st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
@@ -381,33 +371,51 @@ if municipio_final:
             email = c4.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
             telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
 
-            contatos_preenchidos.append({
-                "Origem": "Novo Cadastro" if st.session_state.modo_operacao == "novo" else "Base 90ª RG",
-                "Município/UF": municipio_final,
-                str(COL_TERMO): val_termo,
-                str(COL_RANKING): val_ranking,
-                str(COL_STATUS): val_status,
-                str(COL_PARTICIPACAO): val_participacao,
-                "Observação": observacao_texto.strip(),
-                "Nome": nome,
-                "Cargo": cargo,
-                "Interesse": interesse,
-                "E-mail": email,
-                "Telefone": telefone
+            contatos_temp.append({
+                "nome": nome,
+                "cargo": cargo,
+                "interesse": interesse,
+                "email": email,
+                "telefone": telefone
             })
 
             if i < st.session_state.num_contatos - 1:
                 st.write("")
 
+        # Extensão integrada do bloco de Cadastro de Contatos / Representantes e Novo Município
+        st.write("")
+        st.markdown('<div class="field-header-box">Observação (extensão do cadastro)</div>', unsafe_allow_html=True)
+        observacao_texto = st.text_area(
+            "Observação",
+            placeholder="Digite aqui observações livres sobre os contatos ou sobre o município...",
+            height=100,
+            key=f"obs_{municipio_final}",
+            label_visibility="collapsed"
+        )
+
         enviado = st.form_submit_button("💾 Salvar Contatos", type="primary")
 
         if enviado:
-            validos = [c for c in contatos_preenchidos if c["Nome"].strip() != ""]
+            validos = [c for c in contatos_temp if c["nome"].strip() != ""]
             if not validos:
                 st.warning("Preencha pelo menos o Nome do contato antes de salvar.")
             else:
-                st.session_state.registros_salvos.extend(validos)
-                st.success(f"{len(validos)} contato(s) vinculado(s) a **{municipio_final}** salvo(s) com sucesso!")
+                for c in validos:
+                    st.session_state.registros_salvos.append({
+                        "Origem": "Novo Cadastro" if st.session_state.modo_operacao == "novo" else "Base 90ª RG",
+                        "Município/UF": municipio_final,
+                        str(COL_TERMO): val_termo,
+                        str(COL_RANKING): val_ranking,
+                        str(COL_STATUS): val_status,
+                        str(COL_PARTICIPACAO): val_participacao,
+                        "Nome": c["nome"],
+                        "Cargo": c["cargo"],
+                        "Interesse": c["interesse"],
+                        "E-mail": c["email"],
+                        "Telefone": c["telefone"],
+                        "Observação": observacao_texto.strip()
+                    })
+                st.success(f"{len(validos)} contato(s) e observação vinculados a **{municipio_final}** salvos com sucesso!")
 
 # 9. Tabela de Registros Salvos e Botão de Download Excel
 if st.session_state.get("registros_salvos"):
