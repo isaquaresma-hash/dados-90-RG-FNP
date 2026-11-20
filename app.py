@@ -268,7 +268,7 @@ st.write("")
 
 # Variáveis de controle para município existente ou novo
 municipio_final = None
-val_termo = ""
+val_termo = "Não informado"
 val_ranking = ""
 val_status = ""
 val_participacao = ""
@@ -316,14 +316,14 @@ if st.session_state.modo_operacao == "consulta":
 elif st.session_state.modo_operacao == "novo":
     st.markdown('<div class="field-header-box">Dados do Novo Município (não listado na base)</div>', unsafe_allow_html=True)
     
-    c_novo1, c_novo2, c_novo3 = st.columns([2, 1.2, 1.2])
-    c_novo4, c_novo5 = st.columns([1.5, 2.5])
+    c_novo1, c_novo2 = st.columns([2, 1.5])
+    c_novo3, c_novo4 = st.columns([1.5, 2])
 
     novo_nome = c_novo1.text_input("Nome do Município/UF *", placeholder="Ex: Palmas/TO")
-    val_termo = c_novo2.selectbox(str(COL_TERMO), ["Sim", "Não", "Não informado"], index=0)
-    val_ranking = c_novo3.text_input(str(COL_RANKING), value="Não filiado / Novo")
-    val_status = c_novo4.text_input(str(COL_STATUS), value="Novo Cadastro")
-    val_participacao = c_novo5.text_input(str(COL_PARTICIPACAO), placeholder="Ex: Reunião Geral / Fóruns")
+    val_ranking = c_novo2.text_input(str(COL_RANKING), value="Não filiado / Novo")
+    val_status = c_novo3.text_input(str(COL_STATUS), value="Novo Cadastro")
+    val_participacao = c_novo4.text_input(str(COL_PARTICIPACAO), placeholder="Ex: Reunião Geral / Fóruns")
+    val_termo = "Não informado"
 
     if novo_nome.strip():
         municipio_final = novo_nome.strip()
