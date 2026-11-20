@@ -11,87 +11,153 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Estilos HTML / CSS Personalizados alinhados à identidade visual da FNP
+# 2. CSS seguindo fielmente o modelo visual oficial da FNP
 st.markdown("""
 <style>
-    /* Fundo suave da página */
+    /* Fundo azul-marinho escuro idêntico ao banner da FNP */
     [data-testid="stAppViewContainer"] {
-        background-color: #f4f6f9;
+        background-color: #031c30;
     }
-    
-    /* Banner Oficial no Topo */
-    .fnp-banner-box {
-        background-color: #052038;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(5, 32, 56, 0.18);
-        margin-bottom: 24px;
+    [data-testid="stHeader"] {
+        background: rgba(0, 0, 0, 0);
     }
-    .fnp-banner-box img {
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-    .fnp-banner-subtitle {
-        background-color: #082d4f;
-        color: #ffffff;
-        padding: 12px 28px;
-        font-size: 1.05rem;
-        font-weight: 500;
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
+    .block-container {
+        padding-top: 1.5rem;
+        padding-bottom: 3rem;
+        max-width: 1400px;
     }
 
-    /* Cartões de Dados do Município */
-    .info-card {
-        background-color: #ffffff;
-        border: 1px solid #dce3ec;
-        border-top: 4px solid #052038;
-        border-radius: 8px;
-        padding: 16px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        height: 100%;
-    }
-    .info-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        color: #5c6b7a;
+    /* Título principal branco */
+    .fnp-main-title {
+        color: #ffffff;
+        font-size: 1.75rem;
         font-weight: 700;
-        margin-bottom: 6px;
+        margin-top: 0.5rem;
+        margin-bottom: 1.2rem;
     }
-    .info-value {
-        font-size: 1.05rem;
+
+    /* Cartões de resumo superiores (estilo Capitais / Municípios do modelo) */
+    .kpi-card {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 16px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        margin-bottom: 1.5rem;
+    }
+    .kpi-icon-blue {
+        background-color: #1e40af;
+        color: white;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .kpi-icon-green {
+        background-color: #059669;
+        color: white;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .kpi-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .kpi-number {
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.1;
+        margin: 2px 0;
+    }
+    .kpi-sub {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    /* Badge de seção (estilo "🔍 Consulta e Filtros") */
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #1b364d;
+        color: #ffffff;
+        padding: 8px 16px;
+        border-radius: 8px;
         font-weight: 600;
-        color: #052038;
-        line-height: 1.4;
+        font-size: 0.95rem;
+        margin-bottom: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Cabeçalho escuro acima dos campos/cartões (estilo Porte / UF / Município) */
+    .field-header-box {
+        background-color: #1b364d;
+        color: #ffffff;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    /* Caixa branca arredondada de resultado (estilo Classificação "-") */
+    .data-value-box {
+        background-color: #ffffff;
+        color: #0f172a;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.98rem;
+        font-weight: 700;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        margin-bottom: 14px;
+    }
+
+    /* Ajuste de rótulos dos inputs do Streamlit para ficarem brancos sobre o fundo escuro */
+    label[data-testid="stWidgetLabel"] p {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+    }
+    .stCaption p {
+        color: #cbd5e1 !important;
+    }
+    h3 {
+        color: #ffffff !important;
+    }
+    hr {
+        border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* Estilização do formulário para manter contraste limpo */
+    [data-testid="stForm"] {
+        background-color: #0b2942;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        padding: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Renderização do Banner Oficial ("imagem.pdf.png") no Cabeçalho
-def exibir_banner_oficial(caminho_imagem):
-    if os.path.exists(caminho_imagem):
-        with open(caminho_imagem, "rb") as img_file:
-            b64_string = base64.b64encode(img_file.read()).decode()
-        
-        st.markdown(f"""
-        <div class="fnp-banner-box">
-            <img src="data:image/png;base64,{b64_string}" alt="FNP - Frente Nacional de Prefeitas e Prefeitos">
-            <div class="fnp-banner-subtitle">
-                <span><strong>90ª Reunião Geral da FNP</strong> — Consulta de Municípios e Credenciamento</span>
-                <span style="font-size: 0.9rem; opacity: 0.85;">Base atualizada em 20/11</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.warning("Imagem 'imagem.pdf.png' não encontrada no repositório.")
-
-exibir_banner_oficial("imagem.pdf.png")
-
-# 4. Carregamento da Planilha Excel pulando a linha 1
+# 3. Carregamento da Planilha Excel
 @st.cache_data
 def carregar_dados():
     df = pd.read_excel("banco de dados.xlsx", skiprows=1)
@@ -103,70 +169,107 @@ def carregar_dados():
 try:
     df = carregar_dados()
 except FileNotFoundError:
-    st.error("Arquivo 'banco de dados.xlsx' não encontrado. Verifique se ele está na mesma pasta do app.py.")
+    st.error("Arquivo 'banco de dados.xlsx' não encontrado no repositório.")
     st.stop()
 
-# Mapeamento automático das 5 colunas da planilha
+# Mapeamento das 5 colunas da planilha
 COL_MUNICIPIO    = df.columns[0]  # Município/UF
 COL_TERMO        = df.columns[1]  # Requer assinatura do termo...
 COL_RANKING      = df.columns[2]  # Ranking
 COL_STATUS       = df.columns[3]  # Status
 COL_PARTICIPACAO = df.columns[4]  # Participação
 
-# 5. Campo de Busca por Município/UF
-st.subheader("🔍 Consulta de Município/UF")
+# 4. Cabeçalho com o Logótipo Oficial ("imagem.pdf.png") integrado ao fundo
+if os.path.exists("imagem.pdf.png"):
+    with open("imagem.pdf.png", "rb") as img_file:
+        b64_logo = base64.b64encode(img_file.read()).decode()
+    st.markdown(f"""
+    <div style="margin-bottom: 5px;">
+        <img src="data:image/png;base64,{b64_logo}" style="max-width: 100%; height: auto; max-height: 115px;">
+    </div>
+    """, unsafe_allow_html=True)
+
+# Linha do Título + Botão Superior Direito (estilo "Atualizar Base" do exemplo)
+col_titulo, col_botoes = st.columns([3, 1])
+with col_titulo:
+    st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP — Consulta e Credenciamento</div>', unsafe_allow_html=True)
+with col_botoes:
+    st.write("")
+    if st.button("🔄 Atualizar Base", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+# 5. Cartões Resumo Superiores (KPIs idênticos aos dois blocos brancos do modelo)
+total_inscritos = len(df)
+total_adimplentes = len(df[df[COL_RANKING].astype(str).str.contains("Adimplente", case=False, na=False)])
+
+kpi1, kpi2 = st.columns(2)
+with kpi1:
+    st.markdown(f"""
+    <div class="kpi-card">
+        <div class="kpi-icon-blue">🏛️</div>
+        <div>
+            <div class="kpi-label">MUNICÍPIOS INSCRITOS</div>
+            <div class="kpi-number">{total_inscritos}</div>
+            <div class="kpi-sub">Total registrado na 90ª RG (Atualizado em 20/11)</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with kpi2:
+    st.markdown(f"""
+    <div class="kpi-card">
+        <div class="kpi-icon-green">✅</div>
+        <div>
+            <div class="kpi-label">MUNICÍPIOS ADIMPLENTES</div>
+            <div class="kpi-number">{total_adimplentes}</div>
+            <div class="kpi-sub">Ranking regular na base FNP</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# 6. Seção de Consulta (Estilo "🔍 Consulta e Filtros")
+st.markdown('<div class="section-badge">🔍 Consulta de Município</div>', unsafe_allow_html=True)
+
+# Caixa de seleção com barra superior escura ("Município/UF")
+st.markdown('<div class="field-header-box">Município/UF</div>', unsafe_allow_html=True)
 lista_municipios = sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
 
 municipio_selecionado = st.selectbox(
-    "Digite ou selecione o nome do município:",
+    "Selecione o município",
     options=lista_municipios,
     index=None,
-    placeholder="Ex: Águas Lindas de Goiás/GO, Alvorada/RS, Amparo/SP..."
+    placeholder="- Digite ou selecione o nome do município -",
+    label_visibility="collapsed"
 )
 
-# 6. Exibição dos Dados e Formulário Dinâmico após a Busca
+# 7. Exibição dos 4 Dados do Banco e Formulário após a Seleção
 if municipio_selecionado:
     dados_mun = df[df[COL_MUNICIPIO].astype(str) == municipio_selecionado].iloc[0]
 
-    st.markdown(f"### 📋 Situação Institucional: **{municipio_selecionado}**")
+    st.write("")
+    # 4 Colunas seguindo exatamente o visual de barra escura + caixa branca arredondada do modelo
+    c_termo, c_rank, c_status, c_part = st.columns([1.2, 1, 1.3, 2])
 
-    col1, col2, col3, col4 = st.columns([1.2, 1, 1.3, 2])
+    with c_termo:
+        st.markdown(f'<div class="field-header-box">{COL_TERMO}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{dados_mun[COL_TERMO]}</div>', unsafe_allow_html=True)
 
-    with col1:
-        st.markdown(f"""
-        <div class="info-card">
-            <div class="info-label">{COL_TERMO}</div>
-            <div class="info-value">{dados_mun[COL_TERMO]}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    with c_rank:
+        st.markdown(f'<div class="field-header-box">{COL_RANKING}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{dados_mun[COL_RANKING]}</div>', unsafe_allow_html=True)
 
-    with col2:
-        st.markdown(f"""
-        <div class="info-card">
-            <div class="info-label">{COL_RANKING}</div>
-            <div class="info-value">{dados_mun[COL_RANKING]}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    with c_status:
+        st.markdown(f'<div class="field-header-box">{COL_STATUS}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{dados_mun[COL_STATUS]}</div>', unsafe_allow_html=True)
 
-    with col3:
-        st.markdown(f"""
-        <div class="info-card">
-            <div class="info-label">{COL_STATUS}</div>
-            <div class="info-value">{dados_mun[COL_STATUS]}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col4:
-        st.markdown(f"""
-        <div class="info-card">
-            <div class="info-label">{COL_PARTICIPACAO}</div>
-            <div class="info-value">{dados_mun[COL_PARTICIPACAO]}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    with c_part:
+        st.markdown(f'<div class="field-header-box">{COL_PARTICIPACAO}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="data-value-box">{dados_mun[COL_PARTICIPACAO]}</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # 7. Controle de Múltiplos Contatos na Memória da Sessão
+    # 8. Controle de Múltiplos Contatos
     if "num_contatos" not in st.session_state:
         st.session_state.num_contatos = 1
     if "registros_salvos" not in st.session_state:
@@ -176,26 +279,25 @@ if municipio_selecionado:
         st.session_state.num_contatos = 1
         st.session_state.ultimo_municipio = municipio_selecionado
 
-    st.subheader("📝 Cadastro de Contatos / Representantes")
-    st.caption("Preencha os dados abaixo. Caso deseje cadastrar mais pessoas deste município, clique em '+ Adicionar outro contato'.")
+    st.markdown('<div class="section-badge">📝 Cadastro de Contatos / Representantes</div>', unsafe_allow_html=True)
+    st.caption("Preencha os dados abaixo. Clique em '+ Adicionar outro contato' para incluir mais representantes deste município.")
 
-    col_add, col_rem, _ = st.columns([1.5, 1.5, 5])
+    col_add, col_rem, _ = st.columns([1.6, 1.6, 5])
     with col_add:
-        if st.button("➕ Adicionar outro contato"):
+        if st.button("➕ Adicionar outro contato", use_container_width=True):
             st.session_state.num_contatos += 1
             st.rerun()
     with col_rem:
         if st.session_state.num_contatos > 1:
-            if st.button("➖ Remover último"):
+            if st.button("➖ Remover último", use_container_width=True):
                 st.session_state.num_contatos -= 1
                 st.rerun()
 
-    # Formulário com blocos dinâmicos
     with st.form("form_contatos_fnp", clear_on_submit=False):
         contatos_preenchidos = []
 
         for i in range(st.session_state.num_contatos):
-            st.markdown(f"**Contato {i + 1}**")
+            st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
             c1, c2, c3 = st.columns([2, 2, 2])
             c4, c5 = st.columns([2, 2])
 
@@ -219,7 +321,7 @@ if municipio_selecionado:
             })
 
             if i < st.session_state.num_contatos - 1:
-                st.divider()
+                st.write("")
 
         enviado = st.form_submit_button("💾 Salvar Contatos", type="primary")
 
@@ -231,10 +333,10 @@ if municipio_selecionado:
                 st.session_state.registros_salvos.extend(validos)
                 st.success(f"{len(validos)} contato(s) vinculado(s) a **{municipio_selecionado}** salvo(s) com sucesso!")
 
-    # 8. Visualização e Exportação dos Contatos Cadastrados
+    # 9. Tabela de Registros Salvos e Botão de Download Excel
     if st.session_state.registros_salvos:
         st.markdown("---")
-        st.subheader("📊 Contatos Registrados nesta Sessão")
+        st.markdown('<div class="section-badge">📊 Contatos Registrados nesta Sessão</div>', unsafe_allow_html=True)
         df_salvos = pd.DataFrame(st.session_state.registros_salvos)
         st.dataframe(df_salvos, use_container_width=True)
 
