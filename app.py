@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import os
 
 # 1. Configuração da Página
 st.set_page_config(
@@ -58,21 +59,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3. Carregamento da Planilha Excel
+# 3. Carregamento da Planilha Excel ("banco de dados.xlsx")
 @st.cache_data
 def carregar_dados():
-    # Certifique-se de que o nome do arquivo seja exatamente o mesmo enviado ao GitHub
-    df = pd.read_excel("dados_fnp.xlsx")
+    df = pd.read_excel("banco de dados.xlsx")
     df.columns = df.columns.str.strip()  # Remove espaços extras nos nomes das colunas
     return df
 
 try:
     df = carregar_dados()
 except FileNotFoundError:
-    st.error("Arquivo 'dados_fnp.xlsx' não encontrado. Verifique se ele está na mesma pasta do app.py.")
+    st.error("Arquivo 'banco de dados.xlsx' não encontrado. Verifique se ele está na mesma pasta do app.py.")
     st.stop()
 
-# ⚠️ AJUSTE AQUI OS NOMES EXATOS DAS COLUNAS DA SUA PLANILHA EXCEL:
+# ⚠️ AJUSTE AQUI SE OS NOMES DAS COLUNAS DA SUA PLANILHA FOREM DIFERENTES:
 COL_MUNICIPIO    = "Município"
 COL_TERMO        = "Requer assinatura do termo de filiação"
 COL_RANKING      = "Ranking"
@@ -101,7 +101,6 @@ municipio_selecionado = st.selectbox(
 
 # 5. Exibição dos Dados e Formulário Dinâmico após a Busca
 if municipio_selecionado:
-    # Filtra a linha correspondente ao município escolhido
     dados_mun = df[df[COL_MUNICIPIO].astype(str) == municipio_selecionado].iloc[0]
 
     st.markdown(f"### 📋 Situação Institucional: **{municipio_selecionado}**")
@@ -148,7 +147,6 @@ if municipio_selecionado:
     if "registros_salvos" not in st.session_state:
         st.session_state.registros_salvos = []
 
-    # Reseta a quantidade de blocos para 1 se trocar de município
     if st.session_state.get("ultimo_municipio") != municipio_selecionado:
         st.session_state.num_contatos = 1
         st.session_state.ultimo_municipio = municipio_selecionado
@@ -156,7 +154,6 @@ if municipio_selecionado:
     st.subheader("📝 Cadastro de Contatos / Representantes")
     st.caption("Preencha os dados abaixo. Caso deseje cadastrar mais pessoas deste município, clique em '+ Adicionar outro contato'.")
 
-    # Botões para adicionar ou remover blocos de contato
     col_add, col_rem, _ = st.columns([1.5, 1.5, 5])
     with col_add:
         if st.button("➕ Adicionar outro contato"):
@@ -216,7 +213,6 @@ if municipio_selecionado:
         df_salvos = pd.DataFrame(st.session_state.registros_salvos)
         st.dataframe(df_salvos, use_container_width=True)
 
-        # Gera arquivo Excel para download imediato
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
             df_salvos.to_excel(writer, index=False, sheet_name="Contatos_FNP")
