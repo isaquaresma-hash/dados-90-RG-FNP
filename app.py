@@ -76,12 +76,4 @@ with col_botoes:
         st.rerun()
 
 total_inscritos = len(df)
-svg_predio = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M9 12h.01"/><path d="M15 12h.01"/></svg>'
-kpi_html = f'<div class="kpi-card"><div class="kpi-icon-blue">{svg_predio}</div><div><div class="kpi-label">MUNICÍPIOS INSCRITOS</div><div class="kpi-number">{total_inscritos}</div><div class="kpi-sub">Total registrado na 90ª RG (Atualizado em 20/11)</div></div></div>'
-st.markdown(kpi_html, unsafe_allow_html=True)
-
-col_btn1, col_btn2, _ = st.columns([1.8, 2.5, 4])
-with col_btn1:
-    tipo_consulta = "primary" if st.session_state.modo_operacao == "consulta" else "secondary"
-    if st.button("🔍 Consulta de Município", type=tipo_consulta, use_container_width=True):
-        st.session_state.
+svg_predio = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M
