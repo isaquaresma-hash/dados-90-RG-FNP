@@ -11,67 +11,48 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Função para aplicar "imagem.pdf.png" como fundo da plataforma
-def definir_fundo(caminho_imagem):
-    if os.path.exists(caminho_imagem):
-        with open(caminho_imagem, "rb") as img_file:
-            b64_string = base64.b64encode(img_file.read()).decode()
-        
-        st.markdown(f"""
-        <style>
-            /* Aplica a imagem cobrindo toda a tela */
-            [data-testid="stAppViewContainer"] {{
-                background-image: url("data:image/png;base64,{b64_string}");
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-            }}
-            /* Deixa a barra superior transparente */
-            [data-testid="stHeader"] {{
-                background: rgba(0, 0, 0, 0);
-            }}
-            /* Cria um painel branco translúcido atrás do conteúdo para garantir leitura perfeita */
-            .block-container {{
-                background-color: rgba(255, 255, 255, 0.92);
-                padding: 2.5rem 3rem;
-                border-radius: 16px;
-                margin-top: 1.5rem;
-                margin-bottom: 2rem;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-            }}
-        </style>
-        """, unsafe_allow_html=True)
-
-definir_fundo("imagem.pdf.png")
-
-# 3. Estilos HTML / CSS Personalizados
+# 2. Estilos HTML / CSS Personalizados alinhados à identidade visual da FNP
 st.markdown("""
 <style>
-    .fnp-header {
-        background: linear-gradient(135deg, #0b2e59 0%, #16539c 100%);
-        padding: 25px 30px;
+    /* Fundo suave da página */
+    [data-testid="stAppViewContainer"] {
+        background-color: #f4f6f9;
+    }
+    
+    /* Banner Oficial no Topo */
+    .fnp-banner-box {
+        background-color: #052038;
         border-radius: 12px;
-        color: white;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(5, 32, 56, 0.18);
+        margin-bottom: 24px;
     }
-    .fnp-header h1 {
-        margin: 0;
-        font-size: 1.9rem;
+    .fnp-banner-box img {
+        width: 100%;
+        height: auto;
+        display: block;
     }
-    .fnp-header p {
-        margin: 6px 0 0 0;
-        opacity: 0.9;
-        font-size: 1rem;
+    .fnp-banner-subtitle {
+        background-color: #082d4f;
+        color: #ffffff;
+        padding: 12px 28px;
+        font-size: 1.05rem;
+        font-weight: 500;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
     }
+
+    /* Cartões de Dados do Município */
     .info-card {
         background-color: #ffffff;
-        border: 1px solid #e0e6ed;
-        border-top: 4px solid #16539c;
+        border: 1px solid #dce3ec;
+        border-top: 4px solid #052038;
         border-radius: 8px;
         padding: 16px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         height: 100%;
     }
     .info-label {
@@ -84,16 +65,31 @@ st.markdown("""
     .info-value {
         font-size: 1.05rem;
         font-weight: 600;
-        color: #1a2530;
+        color: #052038;
         line-height: 1.4;
     }
 </style>
-
-<div class="fnp-header">
-    <h1>🏛️ 90ª Reunião Geral da FNP</h1>
-    <p>Municípios inscritos na 90ª RG - Atualizado em 20-11</p>
-</div>
 """, unsafe_allow_html=True)
+
+# 3. Renderização do Banner Oficial ("imagem.pdf.png") no Cabeçalho
+def exibir_banner_oficial(caminho_imagem):
+    if os.path.exists(caminho_imagem):
+        with open(caminho_imagem, "rb") as img_file:
+            b64_string = base64.b64encode(img_file.read()).decode()
+        
+        st.markdown(f"""
+        <div class="fnp-banner-box">
+            <img src="data:image/png;base64,{b64_string}" alt="FNP - Frente Nacional de Prefeitas e Prefeitos">
+            <div class="fnp-banner-subtitle">
+                <span><strong>90ª Reunião Geral da FNP</strong> — Consulta de Municípios e Credenciamento</span>
+                <span style="font-size: 0.9rem; opacity: 0.85;">Base atualizada em 20/11</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.warning("Imagem 'imagem.pdf.png' não encontrada no repositório.")
+
+exibir_banner_oficial("imagem.pdf.png")
 
 # 4. Carregamento da Planilha Excel pulando a linha 1
 @st.cache_data
