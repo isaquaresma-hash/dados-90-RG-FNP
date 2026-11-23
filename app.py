@@ -1,122 +1,31 @@
-"Imersão Técnica Internacional em Cidades Inteligentes, Inovação, Governo Digital, Educação e Desenvolvimento Urbano Sustentável – Estônia, Finlândia e Suécia (Missão)",
-        "Imersão Internacional em PPPs e Concessões para Infraestrutura e Serviços Públicos – Reino Unido e França (Missão)",
-        "Ciclo de Capacitações em Eletromobilidade (Evento)",
-        "Elas Governam (Evento)"
-    ]
-}
+import streamlit as st
+import pandas as pd
+from io import BytesIO
+from datetime import datetime
+import base64
+import os
+import gspread
+from google.oauth2.service_account import Credentials
 
-@st.cache_data
-def carregar_dados():
-    df = pd.read_excel("banco de dados.xlsx", skiprows=1)
-    df.columns = df.columns.astype(str).str.strip()
-    df = df.dropna(how="all")
-    df = df.fillna("Não informado")
-    return df
-
-try:
-    df = carregar_dados()
-except FileNotFoundError:
-    st.error("Arquivo 'banco de dados.xlsx' não encontrado no repositório.")
-    st.stop()
-
-COL_MUNICIPIO = df.columns[0]
-COL_TERMO = df.columns[1]
-COL_RANKING = df.columns[2]
-COL_STATUS = df.columns[3]
-COL_PARTICIPACAO = df.columns[4]
-
-COLUNAS_PLANILHA = [
-    "Data/Hora", "Tipo de Registro", "Origem", "Município/UF",
-    str(COL_TERMO), str(COL_RANKING), str(COL_STATUS), str(COL_PARTICIPACAO),
-    "Observação Município", "Nome", "Cargo", "Interesse / Pauta",
-    "E-mail", "Telefone", "Observação Contatos"
-]
-
-@st.cache_resource
-def conectar_google_sheets():
-    escopos = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credenciais = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"],
-        scopes=escopos
-    )
-    cliente = gspread.authorize(credenciais)
-    planilha = cliente.open_by_url(st.secrets["sheet_url"])
-    try:
-        aba = planilha.worksheet("Cadastros_FNP")
-    except gspread.WorksheetNotFound:
-        aba = planilha.sheet1
-    if not aba.row_values(1):
-        aba.append_row(COLUNAS_PLANILHA)
-    return aba
-
-def carregar_registros_nuvem():
-    try:
-        aba = conectar_google_sheets()
-        return aba.get_all_records()
-    except Exception as e:
-        st.warning(f"Não foi possível conectar ao Google Sheets no momento: {e}")
-        return []
-
-def salvar_registro_persistente(novo_registro):
-    aba = conectar_google_sheets()
-    linha = [str(novo_registro.get(col, "")) for col in COLUNAS_PLANILHA]
-    aba.append_row(linha, value_input_option="USER_ENTERED")
-    if "registros_salvos" not in st.session_state:
-        st.session_state.registros_salvos = []
-    st.session_state.registros_salvos.append(novo_registro)
-
-if "registros_salvos" not in st.session_state:
-    st.session_state.registros_salvos = carregar_registros_nuvem()
-
-if os.path.exists("imagem.pdf.png"):
-    with open("imagem.pdf.png", "rb") as img_file:
-        b64_logo = base64.b64encode(img_file.read()).decode()
-    st.markdown(f'<div class="fnp-logo-container"><img src="data:image/png;base64,{b64_logo}" alt="FNP"></div>', unsafe_allow_html=True)
-
-col_titulo, col_botoes = st.columns([3, 1])
-with col_titulo:
-    st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP</div>', unsafe_allow_html=True)
-with col_botoes:
-    st.write("")
-    if st.button("🔄 Atualizar Base", use_container_width=True):
-        st.cache_data.clear()
-        st.session_state.registros_salvos = carregar_registros_nuvem()
-        st.rerun()
-
-total_inscritos = len(df)
-svg_predio = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M9 12h.01"/><path d="M15 12h.01"/></svg>'
-
-st.markdown(
-    f'<div class="kpi-card"><div class="kpi-icon-blue">{svg_predio}</div><div>'
-    f'<div class="kpi-label">MUNICÍPIOS INSCRITOS</div>'
-    f'<div class="kpi-number">{total_inscritos}</div>'
-    f'<div class="kpi-sub">Total registrado na 90ª RG (Atualizado em 20/11)</div>'
-    f'</div></div>',
-    unsafe_allow_html=True
+st.set_page_config(
+    page_title="90ª Reunião Geral da FNP",
+    page_icon="🏛️",
+    layout="wide"
 )
 
-if "modo_operacao" not in st.session_state:
-    st.session_state.modo_operacao = "consulta"
-
-col_btn1, col_btn2, _ = st.columns([1.8, 2.5, 4])
-
-with col_btn1:
-    tipo_consulta = "primary" if st.session_state.modo_operacao == "consulta" else "secondary"
-    if st.button("🔍 Consulta de Município", type=tipo_consulta, use_container_width=True):
-        st.session_state.modo_operacao = "consulta"
-        st.rerun()
-
-with col_btn2:
-    tipo_novo = "primary" if st.session_state.modo_operacao == "novo" else "secondary"
-    if st.button("➕ Cadastrar novo município (não listado)", type=tipo_novo, use_container_width=True):
-        st.session_state.modo_operacao = "novo"
-        st.rerun()
-
-st.write("")
-
-municipio_final = None
-val_termo = "Não informado"
-val_ranking =
+CSS_ESTILO = (
+    "<style>"
+    "[data-testid='stAppViewContainer'] { background-color: #00243d; }"
+    "[data-testid='stHeader'] { background: rgba(0, 0, 0, 0); }"
+    ".block-container { padding-top: 1.2rem; padding-bottom: 3rem; max-width: 1400px; }"
+    ".fnp-logo-container { width: 360px; height: 120px; overflow: hidden; margin-bottom: 0.3rem; }"
+    ".fnp-logo-container img { width: 1200px; max-width: none; margin-left: -20px; margin-top: -16px; display: block; }"
+    ".fnp-main-title { color: #ffffff; font-size: 1.8rem; font-weight: 700; margin-top: 0.2rem; margin-bottom: 1.2rem; }"
+    ".kpi-card { background-color: #ffffff; border-radius: 10px; padding: 18px 24px; display: flex; align-items: center; gap: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); margin-bottom: 1.5rem; }"
+    ".kpi-icon-blue { background-color: #1e40af; color: #ffffff; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }"
+    ".kpi-label { font-size: 0.74rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }"
+    ".kpi-number { font-size: 1.65rem; font-weight: 800; color: #0f172a; line-height: 1.1; margin: 3px 0; }"
+    ".kpi-sub { font-size: 0.78rem; color: #94a3b8; }"
+    "div.stButton > button[kind='secondary'] { background-color: #1a3a54; color: #ffffff; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 10px 18px; font-weight: 600; font-size: 0.95rem; }"
+    "div.stButton > button[kind='secondary']:hover { background-color: #244e70; border-color: rgba(255,255,255,0.4); color: #ffffff; }"
+    "div.stButton > button[kind='primary'] { background-color: #2563eb; color: #ffffff; border: 1px solid #60a5fa; border-radius: 8px; padding: 10px 18px; font-weight:
