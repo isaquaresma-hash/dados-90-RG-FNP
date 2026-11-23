@@ -228,11 +228,32 @@ elif st.session_state.modo_operacao == "novo":
         novo_contato_email = c_novo5.text_input("E-mail *")
         novo_contato_telefone = c_novo6.text_input("Telefone / WhatsApp *")
 
+        st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta — Temáticas (Marque as opções desejadas)</div>', unsafe_allow_html=True)
+        novo_nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key="novo_pauta_nenhum")
+
+        novo_itens_marcados = []
+        with st.expander(f"📌 Temáticas ({len(TEMATICAS_FNP)} opções)", expanded=True):
+            col_n_chk1, col_n_chk2 = st.columns(2)
+            for idx_item, item_nome in enumerate(TEMATICAS_FNP):
+                coluna_atual = col_n_chk1 if idx_item % 2 == 0 else col_n_chk2
+                marcado = coluna_atual.checkbox(
+                    item_nome,
+                    key=f"novo_chk_{idx_item}"
+                )
+                if marcado:
+                    novo_itens_marcados.append(item_nome)
+
+        if novo_nenhum_marcado and not novo_itens_marcados:
+            novo_interesse_str = "Nenhum"
+        else:
+            novo_interesse_str = "; ".join(novo_itens_marcados)
+
         val_termo = "Não informado"
         val_ranking = "Não filiado / Novo"
         val_status = "Novo Cadastro"
         val_participacao = "Não informado"
 
+        st.write("")
         obs_novo_municipio = st.text_area(
             "Observação do Município",
             placeholder="Digite aqui observações livres sobre este novo município...",
@@ -259,7 +280,7 @@ elif st.session_state.modo_operacao == "novo":
                     "Nome": novo_contato_nome.strip(),
                     "Cargo": novo_contato_cargo.strip(),
                     "Setor": novo_contato_setor.strip(),
-                    "Interesse / Pauta": "",
+                    "Interesse / Pauta": novo_interesse_str,
                     "E-mail": novo_contato_email.strip(),
                     "Telefone": novo_contato_telefone.strip(),
                     "Observação Contatos": ""
