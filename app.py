@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+from datetime import datetime
 import base64
 import os
 
@@ -11,10 +12,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. CSS com a cor exata do fundo (#00243d) e estilo dos blocos lado a lado
+# 2. CSS com a cor exata do fundo (#00243d) e estilo dos blocos
 st.markdown("""
 <style>
-    /* Fundo azul-marinho exato de imagem.pdf.png */
     [data-testid="stAppViewContainer"] {
         background-color: #00243d;
     }
@@ -26,8 +26,6 @@ st.markdown("""
         padding-bottom: 3rem;
         max-width: 1400px;
     }
-
-    /* Enquadramento do logótipo sem excesso de margem azul */
     .fnp-logo-container {
         width: 360px;
         height: 120px;
@@ -41,8 +39,6 @@ st.markdown("""
         margin-top: -16px;
         display: block;
     }
-
-    /* Título principal branco */
     .fnp-main-title {
         color: #ffffff;
         font-size: 1.8rem;
@@ -50,8 +46,6 @@ st.markdown("""
         margin-top: 0.2rem;
         margin-bottom: 1.2rem;
     }
-
-    /* Cartão de resumo superior (KPI) */
     .kpi-card {
         background-color: #ffffff;
         border-radius: 10px;
@@ -91,8 +85,6 @@ st.markdown("""
         font-size: 0.78rem;
         color: #94a3b8;
     }
-
-    /* Estilização dos botões de navegação lado a lado (Consulta vs Novo Município) */
     div.stButton > button[kind="secondary"] {
         background-color: #1a3a54;
         color: #ffffff;
@@ -117,8 +109,6 @@ st.markdown("""
         font-weight: 700;
         font-size: 0.95rem;
     }
-
-    /* Botões vermelhos de Salvar Cadastro nos formulários */
     [data-testid="stForm"] button[kind="primary"] {
         background-color: #ef4444;
         border: 1px solid #f87171;
@@ -129,8 +119,6 @@ st.markdown("""
         border-color: #fca5a5;
         color: #ffffff;
     }
-
-    /* Badge de seção */
     .section-badge {
         display: inline-flex;
         align-items: center;
@@ -144,8 +132,6 @@ st.markdown("""
         margin-bottom: 14px;
         border: 1px solid rgba(255, 255, 255, 0.14);
     }
-
-    /* Cabeçalho escuro acima dos campos/cartões */
     .field-header-box {
         background-color: #1a3a54;
         color: #ffffff;
@@ -155,8 +141,6 @@ st.markdown("""
         font-weight: 600;
         margin-bottom: 8px;
     }
-
-    /* Caixa branca arredondada de resultado */
     .data-value-box {
         background-color: #ffffff;
         color: #0f172a;
@@ -170,12 +154,25 @@ st.markdown("""
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         margin-bottom: 14px;
     }
-
-    /* Ajuste de rótulos dos inputs do Streamlit */
     label[data-testid="stWidgetLabel"] p {
         color: #ffffff !important;
         font-weight: 600 !important;
         font-size: 0.9rem !important;
+    }
+    div[data-testid="stCheckbox"] label p {
+        color: #f1f5f9 !important;
+        font-weight: 400 !important;
+        font-size: 0.86rem !important;
+    }
+    details[data-testid="stExpander"] {
+        background-color: #0d3b5e !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        border-radius: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    details[data-testid="stExpander"] summary p {
+        color: #ffffff !important;
+        font-weight: 700 !important;
     }
     .stCaption p {
         color: #cbd5e1 !important;
@@ -186,8 +183,6 @@ st.markdown("""
     hr {
         border-color: rgba(255, 255, 255, 0.15) !important;
     }
-
-    /* Estilização do formulário */
     [data-testid="stForm"] {
         background-color: #09304f;
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -197,7 +192,95 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Carregamento da Planilha Excel
+# Catálogo unificado de Interesses / Pautas (Listagem + Fóruns Temáticos FNP)
+PAUTAS_FNP = {
+    "Fóruns Temáticos e Comissões": [
+        "Fórum Nacional de Secretários Municipais de Fazenda e Finanças",
+        "Fórum de Cultura das Capitais e Municípios Associados (FNC)",
+        "Fórum Inova Cidades (Inovação e Transformação Digital)",
+        "Fórum de Proteção de Dados Pessoais dos Municípios (LGPD)",
+        "Fórum de Gestores de Limpeza Urbana e Manejo de Resíduos Sólidos",
+        "Fórum Unicidades (Planejamento e Desenvolvimento Urbano)",
+        "Fórum de Dirigentes Municipais de PPPs e Concessões",
+        "Fórum Nacional de Procuradores-Gerais das Capitais e Grandes Cidades (FNPGC)",
+        "Fórum Nacional de Gestoras Municipais de Políticas para Mulheres",
+        "Fórum Nacional de Secretários e Dirigentes de Mobilidade Urbana",
+        "Fórum de Inovação e Tecnologia",
+        "Fórum de Cidades Inteligentes",
+        "Comissão Permanente de Adaptação, Mitigação e Prevenção de Desastres – CAMP",
+        "Comissão de Cidades Amazônicas – CCA",
+        "Comissão Permanente de Desenvolvimento Urbano Sustentável – CDUS",
+        "Comissão Permanente de Educação",
+        "Comissão de Assuntos Sociais",
+        "Comissão de Saúde",
+        "Coalizão de Municípios pela Redução de Mortes",
+        "CASD"
+    ],
+    "Projetos FNP": [
+        "Programa Integrado de Transição Tributária para Municípios",
+        "Plataforma de Governança CGIBS - Conecta IBS",
+        "Programa Integrado em COSIP, PPPs e Concessões",
+        "Plataforma GeoReDus - Dados geoespaciais para todos os municípios brasileiros",
+        "Plataforma IFEM - Circuito de Eventos Regionais de Inteligência em Finanças Públicas Municipais",
+        "Programa Piloto de Atualização Cadastral Imobiliária e Incremento de Receitas Municipais do IPTU para Regiões Metropolitanas",
+        "Projeto ENMU em Ação - Mobilidade Urbana",
+        "Programa Integrado de Arborização e Qualidade do Ar em 2 municípios",
+        "Programa Mutirão Brasil – Radar Brasil + Cidades Amazônicas",
+        "Mobilização El Niño 2026/2027",
+        "Adaptação Climática nas Cidades: Planejamento urbano sensível à água (Water Wise)",
+        "Estudo Tarifa Zero no Transporte Público",
+        "Radar Brasil: Federalismo Climático (RADAR CHAMP)",
+        "Rotas para a Autonomia Econômica das Mulheres",
+        "Mobilidade Urbana: dados pela construção de políticas municipais e metropolitanas no Brasil",
+        "Mais Iguais - FASE 1",
+        "Mais Iguais - FASE 2",
+        "SIMU: Dados de Mobilidade",
+        "ODS",
+        "Projeto GTFS",
+        "Cidades Inovadoras",
+        "Governança Federativa Metropolitana - ANO 1",
+        "Embaixadores da Educação (Legado da Educação)",
+        "Conexão Urbana",
+        "Projeto para Idosos",
+        "Projeto com Ancine",
+        "Estruturas Críticas de Resposta preparadas para Desastres Climáticos",
+        "Transformação Digital em cooperação Trilateral",
+        "Governança em Auditorias de Saúde",
+        "GeoReDUS Patrimônio Histórico e Artístico Nacional – Integração de dados do patrimônio cultural à gestão territorial, urbana e climática dos municípios"
+    ],
+    "Participação Ativa, Missões e Eventos": [
+        "Coalizão para o Desenvolvimento Urbano Sustentável da Amazônia – DUSA (Participação Ativa)",
+        "AdaptaCidades – MMA (Participação Ativa)",
+        "Programa Cidades Verdes Resilientes – PCVR (Participação Ativa)",
+        "Mitiga+ Brasil (Participação Ativa)",
+        "Rede Ruas Completas (Participação Ativa)",
+        "Imersão Técnica Internacional em Cidades Inteligentes, Inovação, Governo Digital, Educação e Desenvolvimento Urbano Sustentável – Estônia, Finlândia e Suécia (Missão)",
+        "Imersão Internacional em PPPs e Concessões para Infraestrutura e Serviços Públicos – Reino Unido e França (Missão)",
+        "Ciclo de Capacitações em Eletromobilidade (Evento)",
+        "Elas Governam (Evento)"
+    ]
+}
+
+ARQUIVO_SAIDA_EXCEL = "cadastros_90_reuniao_fnp.xlsx"
+
+def salvar_registro_persistente(novo_registro):
+    if "registros_salvos" not in st.session_state:
+        st.session_state.registros_salvos = []
+    st.session_state.registros_salvos.append(novo_registro)
+    df_export = pd.DataFrame(st.session_state.registros_salvos)
+    df_export.to_excel(ARQUIVO_SAIDA_EXCEL, index=False, sheet_name="Cadastros_FNP")
+
+# Carrega registros já salvos no Excel local caso o arquivo exista
+if "registros_salvos" not in st.session_state:
+    if os.path.exists(ARQUIVO_SAIDA_EXCEL):
+        try:
+            st.session_state.registros_salvos = pd.read_excel(ARQUIVO_SAIDA_EXCEL).fillna("").to_dict("records")
+        except Exception:
+            st.session_state.registros_salvos = []
+    else:
+        st.session_state.registros_salvos = []
+
+# 3. Carregamento da Planilha Excel Base
 @st.cache_data
 def carregar_dados():
     df = pd.read_excel("banco de dados.xlsx", skiprows=1)
@@ -212,11 +295,11 @@ except FileNotFoundError:
     st.error("Arquivo 'banco de dados.xlsx' não encontrado no repositório.")
     st.stop()
 
-COL_MUNICIPIO    = df.columns[0]  # Município/UF
-COL_TERMO        = df.columns[1]  # Requer assinatura do termo...
-COL_RANKING      = df.columns[2]  # Ranking
-COL_STATUS       = df.columns[3]  # Status
-COL_PARTICIPACAO = df.columns[4]  # Participação
+COL_MUNICIPIO    = df.columns[0]
+COL_TERMO        = df.columns[1]
+COL_RANKING      = df.columns[2]
+COL_STATUS       = df.columns[3]
+COL_PARTICIPACAO = df.columns[4]
 
 # 4. Cabeçalho com o Logótipo Oficial fundido ao fundo (#00243d)
 if os.path.exists("imagem.pdf.png"):
@@ -228,7 +311,6 @@ if os.path.exists("imagem.pdf.png"):
     </div>
     """, unsafe_allow_html=True)
 
-# Linha do Título + Botão Superior Direito
 col_titulo, col_botoes = st.columns([3, 1])
 with col_titulo:
     st.markdown('<div class="fnp-main-title">90ª Reunião Geral da FNP</div>', unsafe_allow_html=True)
@@ -258,7 +340,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# 6. Dois Blocos Lado a Lado: "🔍 Consulta de Município" e "➕ Cadastrar novo município (não listado)"
+# 6. Dois Blocos Lado a Lado: Consulta vs Cadastrar Novo Município
 if "modo_operacao" not in st.session_state:
     st.session_state.modo_operacao = "consulta"
 
@@ -278,7 +360,6 @@ with col_btn2:
 
 st.write("")
 
-# Variáveis de controle para município existente ou novo
 municipio_final = None
 val_termo = "Não informado"
 val_ranking = ""
@@ -352,10 +433,10 @@ elif st.session_state.modo_operacao == "novo":
             if not novo_nome.strip():
                 st.warning("Preencha o **Nome do Município/UF** antes de salvar o cadastro.")
             else:
-                if "registros_salvos" not in st.session_state:
-                    st.session_state.registros_salvos = []
-                st.session_state.registros_salvos.append({
-                    "Origem": "Novo Cadastro (Município)",
+                salvar_registro_persistente({
+                    "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                    "Tipo de Registro": "Novo Município",
+                    "Origem": "Novo Cadastro",
                     "Município/UF": novo_nome.strip(),
                     str(COL_TERMO): val_termo,
                     str(COL_RANKING): val_ranking,
@@ -364,7 +445,7 @@ elif st.session_state.modo_operacao == "novo":
                     "Observação Município": obs_novo_municipio.strip(),
                     "Nome": "",
                     "Cargo": "",
-                    "Interesse": "",
+                    "Interesse / Pauta": "",
                     "E-mail": "",
                     "Telefone": "",
                     "Observação Contatos": ""
@@ -376,14 +457,12 @@ elif st.session_state.modo_operacao == "novo":
     else:
         st.info("Digite o **Nome do Município/UF** acima e clique em **💾 Salvar Cadastro** ou preencha os contatos abaixo.")
 
-# 8. Cadastro de Contatos / Representantes com Observação integrada
+# 8. Cadastro de Contatos / Representantes com Checklist de Interesse / Pauta e Observação
 if municipio_final:
     st.markdown("---")
 
     if "num_contatos" not in st.session_state:
         st.session_state.num_contatos = 1
-    if "registros_salvos" not in st.session_state:
-        st.session_state.registros_salvos = []
 
     if st.session_state.get("ultimo_municipio") != municipio_final:
         st.session_state.num_contatos = 1
@@ -408,25 +487,45 @@ if municipio_final:
 
         for i in range(st.session_state.num_contatos):
             st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
-            c1, c2, c3 = st.columns([2, 2, 2])
-            c4, c5 = st.columns([2, 2])
+            c1, c2 = st.columns([2, 2])
+            c3, c4 = st.columns([2, 2])
 
             nome = c1.text_input("Nome completo *", key=f"nome_{municipio_final}_{i}")
             cargo = c2.text_input("Cargo *", key=f"cargo_{municipio_final}_{i}")
-            interesse = c3.text_input("Interesse / Pauta", key=f"interesse_{municipio_final}_{i}")
-            email = c4.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
-            telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
+            email = c3.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
+            telefone = c4.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
+
+            st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta (Marque as opções desejadas)</div>', unsafe_allow_html=True)
+            nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key=f"pauta_nenhum_{municipio_final}_{i}")
+
+            itens_marcados = []
+            for idx_cat, (categoria, lista_itens) in enumerate(PAUTAS_FNP.items()):
+                with st.expander(f"📌 {categoria} ({len(lista_itens)} opções)", expanded=(idx_cat == 0)):
+                    col_chk1, col_chk2 = st.columns(2)
+                    for idx_item, item_nome in enumerate(lista_itens):
+                        coluna_atual = col_chk1 if idx_item % 2 == 0 else col_chk2
+                        marcado = coluna_atual.checkbox(
+                            item_nome,
+                            key=f"chk_{municipio_final}_{i}_{idx_cat}_{idx_item}"
+                        )
+                        if marcado:
+                            itens_marcados.append(item_nome)
+
+            if nenhum_marcado and not itens_marcados:
+                interesse_str = "Nenhum"
+            else:
+                interesse_str = "; ".join(itens_marcados)
 
             contatos_temp.append({
                 "nome": nome,
                 "cargo": cargo,
-                "interesse": interesse,
+                "interesse": interesse_str,
                 "email": email,
                 "telefone": telefone
             })
 
             if i < st.session_state.num_contatos - 1:
-                st.write("")
+                st.markdown("---")
 
         st.write("")
         st.markdown('<div class="field-header-box">Observação dos Contatos / Atendimento</div>', unsafe_allow_html=True)
@@ -446,7 +545,9 @@ if municipio_final:
                 st.warning("Preencha pelo menos o Nome do contato antes de salvar.")
             else:
                 for c in validos:
-                    st.session_state.registros_salvos.append({
+                    salvar_registro_persistente({
+                        "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                        "Tipo de Registro": "Contato / Representante",
                         "Origem": "Novo Cadastro" if st.session_state.modo_operacao == "novo" else "Base 90ª RG",
                         "Município/UF": municipio_final,
                         str(COL_TERMO): val_termo,
@@ -456,27 +557,27 @@ if municipio_final:
                         "Observação Município": obs_novo_municipio.strip(),
                         "Nome": c["nome"],
                         "Cargo": c["cargo"],
-                        "Interesse": c["interesse"],
+                        "Interesse / Pauta": c["interesse"],
                         "E-mail": c["email"],
                         "Telefone": c["telefone"],
                         "Observação Contatos": observacao_contatos.strip()
                     })
-                st.success(f"{len(validos)} registro(s) vinculado(s) a **{municipio_final}** salvo(s) com sucesso!")
+                st.success(f"{len(validos)} registro(s) vinculado(s) a **{municipio_final}** salvo(s) na planilha com sucesso!")
 
-# 9. Tabela de Registros Salvos e Botão de Download Excel
+# 9. Tabela Consolidada de Cadastros Salvos e Botão de Download Excel
 if st.session_state.get("registros_salvos"):
     st.markdown("---")
-    st.markdown('<div class="section-badge">📊 Registros Salvos nesta Sessão</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-badge">📊 Planilha Consolidada de Cadastros Salvos</div>', unsafe_allow_html=True)
     df_salvos = pd.DataFrame(st.session_state.registros_salvos)
     st.dataframe(df_salvos, use_container_width=True)
 
     buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df_salvos.to_excel(writer, index=False, sheet_name="Contatos_FNP")
+        df_salvos.to_excel(writer, index=False, sheet_name="Cadastros_FNP")
 
     st.download_button(
-        label="📥 Baixar Planilha com Registros Cadastrados (.xlsx)",
+        label="📥 Baixar Planilha Excel Atualizada (.xlsx)",
         data=buffer.getvalue(),
-        file_name="cadastros_90_reuniao_fnp.xlsx",
+        file_name=ARQUIVO_SAIDA_EXCEL,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
