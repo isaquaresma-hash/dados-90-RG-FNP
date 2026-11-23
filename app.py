@@ -90,15 +90,20 @@ COL_RANKING = df.columns[2]
 COL_STATUS = df.columns[3]
 COL_PARTICIPACAO = df.columns[4]
 
-COLUNAS_PLANILHA = [
+COLUNAS_CONTATOS = [
     "Data/Hora", "Tipo de Registro", "Origem", "Município/UF",
     str(COL_TERMO), str(COL_RANKING), str(COL_STATUS), str(COL_PARTICIPACAO),
-    "Observação Município", "Nome", "Cargo", "Setor", "Interesse / Pauta",
+    "Nome", "Cargo", "Setor", "Interesse / Pauta",
     "E-mail", "Telefone", "Observação Contatos"
 ]
 
+COLUNAS_NOVOS_MUNICIPIOS = [
+    "Data/Hora", "Município/UF", "Nome", "Cargo", "Setor",
+    "Interesse / Pauta", "E-mail", "Telefone", "Observação"
+]
+
 @st.cache_resource
-def conectar_google_sheets():
+def conectar_planilha():
     escopos = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
@@ -108,18 +113,26 @@ def conectar_google_sheets():
         scopes=escopos
     )
     cliente = gspread.authorize(credenciais)
-    planilha = cliente.open_by_url(st.secrets["sheet_url"])
+    return cliente.open_by_url(st.secrets["sheet_url"])
+
+def obter_aba(nome_aba, colunas_cabecalho):
+    planilha = conectar_planilha()
     try:
-        aba = planilha.worksheet("Cadastros_FNP")
+        aba = planilha.worksheet(nome_aba)
     except gspread.WorksheetNotFound:
-        aba = planilha.sheet1
+        aba = planilha.add_worksheet(title=nome_aba, rows=1000, cols=len(colunas_cabecalho))
     if not aba.row_values(1):
-        aba.append_row(COLUNAS_PLANILHA)
+        aba.append_row(colunas_cabecalho)
     return aba
 
-def salvar_registro_persistente(novo_registro):
-    aba = conectar_google_sheets()
-    linha = [str(novo_registro.get(col, "")) for col in COLUNAS_PLANILHA]
+def salvar_contato_base(novo_registro):
+    aba = obter_aba("Cadastros_FNP", COLUNAS_CONTATOS)
+    linha = [str(novo_registro.get(col, "")) for col in COLUNAS_CONTATOS]
+    aba.append_row(linha, value_input_option="USER_ENTERED")
+
+def salvar_novo_municipio(novo_registro):
+    aba = obter_aba("Novos_Municipios", COLUNAS_NOVOS_MUNICIPIOS)
+    linha = [str(novo_registro.get(col, "")) for col in COLUNAS_NOVOS_MUNICIPIOS]
     aba.append_row(linha, value_input_option="USER_ENTERED")
 
 if os.path.exists("imagem.pdf.png"):
@@ -167,13 +180,6 @@ with col_btn2:
 
 st.write("")
 
-municipio_final = None
-val_termo = "Não informado"
-val_ranking = ""
-val_status = ""
-val_participacao = ""
-obs_novo_municipio = ""
-
 if st.session_state.modo_operacao == "consulta":
     st.markdown('<div class="field-header-box">Município/UF</div>', unsafe_allow_html=True)
     lista_municipios = sorted(df[COL_MUNICIPIO].astype(str).unique().tolist())
@@ -187,7 +193,6 @@ if st.session_state.modo_operacao == "consulta":
     )
 
     if selecao:
-        municipio_final = selecao
         dados_mun = df[df[COL_MUNICIPIO].astype(str) == selecao].iloc[0]
         val_termo = dados_mun[COL_TERMO]
         val_ranking = dados_mun[COL_RANKING]
@@ -212,6 +217,112 @@ if st.session_state.modo_operacao == "consulta":
         with c_part:
             st.markdown(f'<div class="field-header-box">{COL_PARTICIPACAO}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="data-value-box">{val_participacao}</div>', unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        if "num_contatos" not in st.session_state:
+            st.session_state.num_contatos = 1
+
+        if st.session_state.get("ultimo_municipio") != selecao:
+            st.session_state.num_contatos = 1
+            st.session_state.ultimo_municipio = selecao
+
+        st.markdown(f'<div class="section-badge">📝 Cadastro de Contatos / Representantes — {selecao}</div>', unsafe_allow_html=True)
+        st.caption("Preencha os dados abaixo. Clique em '+ Adicionar outro contato' para incluir mais representantes deste município.")
+
+        col_add, col_rem, _ = st.columns([1.6, 1.6, 5])
+        with col_add:
+            if st.button("➕ Adicionar outro contato", use_container_width=True):
+                st.session_state.num_contatos += 1
+                st.rerun()
+        with col_rem:
+            if st.session_state.num_contatos > 1:
+                if st.button("➖ Remover último", use_container_width=True):
+                    st.session_state.num_contatos -= 1
+                    st.rerun()
+
+        with st.form("form_contatos_fnp", clear_on_submit=False):
+            contatos_temp = []
+
+            for i in range(st.session_state.num_contatos):
+                st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
+                c1, c2, c3 = st.columns([2, 1.5, 1.5])
+                c4, c5 = st.columns([2, 2])
+
+                nome = c1.text_input("Nome completo *", key=f"nome_{selecao}_{i}")
+                cargo = c2.text_input("Cargo *", key=f"cargo_{selecao}_{i}")
+                setor = c3.text_input("Setor", key=f"setor_{selecao}_{i}")
+                email = c4.text_input("E-mail *", key=f"email_{selecao}_{i}")
+                telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{selecao}_{i}")
+
+                st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta — Temáticas (Marque as opções desejadas)</div>', unsafe_allow_html=True)
+                nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key=f"pauta_nenhum_{selecao}_{i}")
+
+                itens_marcados = []
+                with st.expander(f"📌 Temáticas ({len(TEMATICAS_FNP)} opções)", expanded=True):
+                    col_chk1, col_chk2 = st.columns(2)
+                    for idx_item, item_nome in enumerate(TEMATICAS_FNP):
+                        coluna_atual = col_chk1 if idx_item % 2 == 0 else col_chk2
+                        marcado = coluna_atual.checkbox(
+                            item_nome,
+                            key=f"chk_{selecao}_{i}_{idx_item}"
+                        )
+                        if marcado:
+                            itens_marcados.append(item_nome)
+
+                if nenhum_marcado and not itens_marcados:
+                    interesse_str = "Nenhum"
+                else:
+                    interesse_str = "; ".join(itens_marcados)
+
+                contatos_temp.append({
+                    "nome": nome,
+                    "cargo": cargo,
+                    "setor": setor,
+                    "interesse": interesse_str,
+                    "email": email,
+                    "telefone": telefone
+                })
+
+                if i < st.session_state.num_contatos - 1:
+                    st.markdown("---")
+
+            st.write("")
+            st.markdown('<div class="field-header-box">Observação dos Contatos / Atendimento</div>', unsafe_allow_html=True)
+            observacao_contatos = st.text_area(
+                "Observação",
+                placeholder="Digite aqui observações livres sobre os contatos ou o atendimento...",
+                height=90,
+                key=f"obs_contatos_{selecao}",
+                label_visibility="collapsed"
+            )
+
+            enviado = st.form_submit_button("💾 Salvar Cadastro", type="primary")
+
+            if enviado:
+                validos = [c for c in contatos_temp if c["nome"].strip() != ""]
+                if not validos:
+                    st.warning("Preencha pelo menos o Nome do contato antes de salvar.")
+                else:
+                    for c in validos:
+                        salvar_contato_base({
+                            "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                            "Tipo de Registro": "Contato / Representante",
+                            "Origem": "Base 90ª RG",
+                            "Município/UF": selecao,
+                            str(COL_TERMO): val_termo,
+                            str(COL_RANKING): val_ranking,
+                            str(COL_STATUS): val_status,
+                            str(COL_PARTICIPACAO): val_participacao,
+                            "Nome": c["nome"],
+                            "Cargo": c["cargo"],
+                            "Setor": c["setor"],
+                            "Interesse / Pauta": c["interesse"],
+                            "E-mail": c["email"],
+                            "Telefone": c["telefone"],
+                            "Observação Contatos": observacao_contatos.strip()
+                        })
+                    st.success(f"{len(validos)} registro(s) vinculado(s) a **{selecao}** salvo(s) na aba **Cadastros_FNP** com sucesso!")
 
 elif st.session_state.modo_operacao == "novo":
     st.markdown('<div class="field-header-box">Dados do Novo Município (não listado na base)</div>', unsafe_allow_html=True)
@@ -248,15 +359,10 @@ elif st.session_state.modo_operacao == "novo":
         else:
             novo_interesse_str = "; ".join(novo_itens_marcados)
 
-        val_termo = "Não informado"
-        val_ranking = "Não filiado / Novo"
-        val_status = "Novo Cadastro"
-        val_participacao = "Não informado"
-
         st.write("")
         obs_novo_municipio = st.text_area(
-            "Observação do Município",
-            placeholder="Digite aqui observações livres sobre este novo município...",
+            "Observação",
+            placeholder="Digite aqui observações livres sobre este novo município ou contato...",
             height=90,
             key="obs_novo_mun_input"
         )
@@ -267,135 +373,15 @@ elif st.session_state.modo_operacao == "novo":
             if not novo_nome.strip():
                 st.warning("Preencha o **Nome do Município/UF** antes de salvar o cadastro.")
             else:
-                salvar_registro_persistente({
+                salvar_novo_municipio({
                     "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
-                    "Tipo de Registro": "Novo Município",
-                    "Origem": "Novo Cadastro",
                     "Município/UF": novo_nome.strip(),
-                    str(COL_TERMO): val_termo,
-                    str(COL_RANKING): val_ranking,
-                    str(COL_STATUS): val_status,
-                    str(COL_PARTICIPACAO): val_participacao,
-                    "Observação Município": obs_novo_municipio.strip(),
                     "Nome": novo_contato_nome.strip(),
                     "Cargo": novo_contato_cargo.strip(),
                     "Setor": novo_contato_setor.strip(),
                     "Interesse / Pauta": novo_interesse_str,
                     "E-mail": novo_contato_email.strip(),
                     "Telefone": novo_contato_telefone.strip(),
-                    "Observação Contatos": ""
+                    "Observação": obs_novo_municipio.strip()
                 })
-                st.success(f"Cadastro do município **{novo_nome.strip()}** salvo na planilha com sucesso!")
-
-    if novo_nome.strip():
-        municipio_final = novo_nome.strip()
-    else:
-        st.info("Digite o **Nome do Município/UF** acima e clique em **💾 Salvar Cadastro** ou preencha os contatos abaixo.")
-
-if municipio_final:
-    st.markdown("---")
-
-    if "num_contatos" not in st.session_state:
-        st.session_state.num_contatos = 1
-
-    if st.session_state.get("ultimo_municipio") != municipio_final:
-        st.session_state.num_contatos = 1
-        st.session_state.ultimo_municipio = municipio_final
-
-    st.markdown(f'<div class="section-badge">📝 Cadastro de Contatos / Representantes — {municipio_final}</div>', unsafe_allow_html=True)
-    st.caption("Preencha os dados abaixo. Clique em '+ Adicionar outro contato' para incluir mais representantes deste município.")
-
-    col_add, col_rem, _ = st.columns([1.6, 1.6, 5])
-    with col_add:
-        if st.button("➕ Adicionar outro contato", use_container_width=True):
-            st.session_state.num_contatos += 1
-            st.rerun()
-    with col_rem:
-        if st.session_state.num_contatos > 1:
-            if st.button("➖ Remover último", use_container_width=True):
-                st.session_state.num_contatos -= 1
-                st.rerun()
-
-    with st.form("form_contatos_fnp", clear_on_submit=False):
-        contatos_temp = []
-
-        for i in range(st.session_state.num_contatos):
-            st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
-            c1, c2, c3 = st.columns([2, 1.5, 1.5])
-            c4, c5 = st.columns([2, 2])
-
-            nome = c1.text_input("Nome completo *", key=f"nome_{municipio_final}_{i}")
-            cargo = c2.text_input("Cargo *", key=f"cargo_{municipio_final}_{i}")
-            setor = c3.text_input("Setor", key=f"setor_{municipio_final}_{i}")
-            email = c4.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
-            telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
-
-            st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta — Temáticas (Marque as opções desejadas)</div>', unsafe_allow_html=True)
-            nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key=f"pauta_nenhum_{municipio_final}_{i}")
-
-            itens_marcados = []
-            with st.expander(f"📌 Temáticas ({len(TEMATICAS_FNP)} opções)", expanded=True):
-                col_chk1, col_chk2 = st.columns(2)
-                for idx_item, item_nome in enumerate(TEMATICAS_FNP):
-                    coluna_atual = col_chk1 if idx_item % 2 == 0 else col_chk2
-                    marcado = coluna_atual.checkbox(
-                        item_nome,
-                        key=f"chk_{municipio_final}_{i}_{idx_item}"
-                    )
-                    if marcado:
-                        itens_marcados.append(item_nome)
-
-            if nenhum_marcado and not itens_marcados:
-                interesse_str = "Nenhum"
-            else:
-                interesse_str = "; ".join(itens_marcados)
-
-            contatos_temp.append({
-                "nome": nome,
-                "cargo": cargo,
-                "setor": setor,
-                "interesse": interesse_str,
-                "email": email,
-                "telefone": telefone
-            })
-
-            if i < st.session_state.num_contatos - 1:
-                st.markdown("---")
-
-        st.write("")
-        st.markdown('<div class="field-header-box">Observação dos Contatos / Atendimento</div>', unsafe_allow_html=True)
-        observacao_contatos = st.text_area(
-            "Observação",
-            placeholder="Digite aqui observações livres sobre os contatos ou o atendimento...",
-            height=90,
-            key=f"obs_contatos_{municipio_final}",
-            label_visibility="collapsed"
-        )
-
-        enviado = st.form_submit_button("💾 Salvar Cadastro", type="primary")
-
-        if enviado:
-            validos = [c for c in contatos_temp if c["nome"].strip() != ""]
-            if not validos:
-                st.warning("Preencha pelo menos o Nome do contato antes de salvar.")
-            else:
-                for c in validos:
-                    salvar_registro_persistente({
-                        "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
-                        "Tipo de Registro": "Contato / Representante",
-                        "Origem": "Novo Cadastro" if st.session_state.modo_operacao == "novo" else "Base 90ª RG",
-                        "Município/UF": municipio_final,
-                        str(COL_TERMO): val_termo,
-                        str(COL_RANKING): val_ranking,
-                        str(COL_STATUS): val_status,
-                        str(COL_PARTICIPACAO): val_participacao,
-                        "Observação Município": obs_novo_municipio.strip(),
-                        "Nome": c["nome"],
-                        "Cargo": c["cargo"],
-                        "Setor": c["setor"],
-                        "Interesse / Pauta": c["interesse"],
-                        "E-mail": c["email"],
-                        "Telefone": c["telefone"],
-                        "Observação Contatos": observacao_contatos.strip()
-                    })
-                st.success(f"{len(validos)} registro(s) vinculado(s) a **{municipio_final}** salvo(s) na planilha com sucesso!")
+                st.success(f"Cadastro do município **{novo_nome.strip()}** salvo na aba **Novos_Municipios** com sucesso!")
