@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from io import BytesIO
 from datetime import datetime
 import base64
 import os
@@ -164,24 +163,10 @@ def conectar_google_sheets():
         aba.append_row(COLUNAS_PLANILHA)
     return aba
 
-def carregar_registros_nuvem():
-    try:
-        aba = conectar_google_sheets()
-        return aba.get_all_records()
-    except Exception as e:
-        st.warning(f"Não foi possível conectar ao Google Sheets no momento: {e}")
-        return []
-
 def salvar_registro_persistente(novo_registro):
     aba = conectar_google_sheets()
     linha = [str(novo_registro.get(col, "")) for col in COLUNAS_PLANILHA]
     aba.append_row(linha, value_input_option="USER_ENTERED")
-    if "registros_salvos" not in st.session_state:
-        st.session_state.registros_salvos = []
-    st.session_state.registros_salvos.append(novo_registro)
-
-if "registros_salvos" not in st.session_state:
-    st.session_state.registros_salvos = carregar_registros_nuvem()
 
 if os.path.exists("imagem.pdf.png"):
     with open("imagem.pdf.png", "rb") as img_file:
@@ -195,7 +180,6 @@ with col_botoes:
     st.write("")
     if st.button("🔄 Atualizar Base", use_container_width=True):
         st.cache_data.clear()
-        st.session_state.registros_salvos = carregar_registros_nuvem()
         st.rerun()
 
 total_inscritos = len(df)
@@ -318,7 +302,7 @@ elif st.session_state.modo_operacao == "novo":
                     "Telefone": "",
                     "Observação Contatos": ""
                 })
-                st.success(f"Cadastro do município **{novo_nome.strip()}** salvo na nuvem com sucesso!")
+                st.success(f"Cadastro do município **{novo_nome.strip()}** salvo na planilha com sucesso!")
 
     if novo_nome.strip():
         municipio_final = novo_nome.strip()
@@ -429,21 +413,4 @@ if municipio_final:
                         "Telefone": c["telefone"],
                         "Observação Contatos": observacao_contatos.strip()
                     })
-                st.success(f"{len(validos)} registro(s) vinculado(s) a **{municipio_final}** salvo(s) na nuvem com sucesso!")
-
-if st.session_state.get("registros_salvos"):
-    st.markdown("---")
-    st.markdown('<div class="section-badge">📊 Planilha Consolidada de Cadastros Salvos (Nuvem)</div>', unsafe_allow_html=True)
-    df_salvos = pd.DataFrame(st.session_state.registros_salvos)
-    st.dataframe(df_salvos, use_container_width=True)
-
-    buffer = BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df_salvos.to_excel(writer, index=False, sheet_name="Cadastros_FNP")
-
-    st.download_button(
-        label="📥 Baixar Planilha Excel Atualizada (.xlsx)",
-        data=buffer.getvalue(),
-        file_name="cadastros_90_reuniao_fnp.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+                st.success(f"{len(validos)} registro(s) vinculado(s) a **{municipio_final}** salvo(s) na planilha com sucesso!")
