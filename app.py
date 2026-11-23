@@ -93,7 +93,7 @@ COL_PARTICIPACAO = df.columns[4]
 COLUNAS_PLANILHA = [
     "Data/Hora", "Tipo de Registro", "Origem", "Município/UF",
     str(COL_TERMO), str(COL_RANKING), str(COL_STATUS), str(COL_PARTICIPACAO),
-    "Observação Município", "Nome", "Cargo", "Interesse / Pauta",
+    "Observação Município", "Nome", "Cargo", "Setor", "Interesse / Pauta",
     "E-mail", "Telefone", "Observação Contatos"
 ]
 
@@ -251,6 +251,7 @@ elif st.session_state.modo_operacao == "novo":
                     "Observação Município": obs_novo_municipio.strip(),
                     "Nome": "",
                     "Cargo": "",
+                    "Setor": "",
                     "Interesse / Pauta": "",
                     "E-mail": "",
                     "Telefone": "",
@@ -292,13 +293,14 @@ if municipio_final:
 
         for i in range(st.session_state.num_contatos):
             st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
-            c1, c2 = st.columns([2, 2])
-            c3, c4 = st.columns([2, 2])
+            c1, c2, c3 = st.columns([2, 1.5, 1.5])
+            c4, c5 = st.columns([2, 2])
 
             nome = c1.text_input("Nome completo *", key=f"nome_{municipio_final}_{i}")
             cargo = c2.text_input("Cargo *", key=f"cargo_{municipio_final}_{i}")
-            email = c3.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
-            telefone = c4.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
+            setor = c3.text_input("Setor", key=f"setor_{municipio_final}_{i}")
+            email = c4.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
+            telefone = c5.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
 
             st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta — Temáticas (Marque as opções desejadas)</div>', unsafe_allow_html=True)
             nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key=f"pauta_nenhum_{municipio_final}_{i}")
@@ -323,6 +325,7 @@ if municipio_final:
             contatos_temp.append({
                 "nome": nome,
                 "cargo": cargo,
+                "setor": setor,
                 "interesse": interesse_str,
                 "email": email,
                 "telefone": telefone
@@ -361,6 +364,7 @@ if municipio_final:
                         "Observação Município": obs_novo_municipio.strip(),
                         "Nome": c["nome"],
                         "Cargo": c["cargo"],
+                        "Setor": c["setor"],
                         "Interesse / Pauta": c["interesse"],
                         "E-mail": c["email"],
                         "Telefone": c["telefone"],
