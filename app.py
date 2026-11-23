@@ -48,73 +48,27 @@ CSS_ESTILO = (
 )
 st.markdown(CSS_ESTILO, unsafe_allow_html=True)
 
-PAUTAS_FNP = {
-    "Fóruns Temáticos e Comissões": [
-        "Fórum Nacional de Secretários Municipais de Fazenda e Finanças",
-        "Fórum de Cultura das Capitais e Municípios Associados (FNC)",
-        "Fórum Inova Cidades (Inovação e Transformação Digital)",
-        "Fórum de Proteção de Dados Pessoais dos Municípios (LGPD)",
-        "Fórum de Gestores de Limpeza Urbana e Manejo de Resíduos Sólidos",
-        "Fórum Unicidades (Planejamento e Desenvolvimento Urbano)",
-        "Fórum de Dirigentes Municipais de PPPs e Concessões",
-        "Fórum Nacional de Procuradores-Gerais das Capitais e Grandes Cidades (FNPGC)",
-        "Fórum Nacional de Gestoras Municipais de Políticas para Mulheres",
-        "Fórum Nacional de Secretários e Dirigentes de Mobilidade Urbana",
-        "Fórum de Inovação e Tecnologia",
-        "Fórum de Cidades Inteligentes",
-        "Comissão Permanente de Adaptação, Mitigação e Prevenção de Desastres – CAMP",
-        "Comissão de Cidades Amazônicas – CCA",
-        "Comissão Permanente de Desenvolvimento Urbano Sustentável – CDUS",
-        "Comissão Permanente de Educação",
-        "Comissão de Assuntos Sociais",
-        "Comissão de Saúde",
-        "Coalizão de Municípios pela Redução de Mortes",
-        "CASD"
-    ],
-    "Projetos FNP": [
-        "Programa Integrado de Transição Tributária para Municípios",
-        "Plataforma de Governança CGIBS - Conecta IBS",
-        "Programa Integrado em COSIP, PPPs e Concessões",
-        "Plataforma GeoReDus - Dados geoespaciais para todos os municípios brasileiros",
-        "Plataforma IFEM - Circuito de Eventos Regionais de Inteligência em Finanças Públicas Municipais",
-        "Programa Piloto de Atualização Cadastral Imobiliária e Incremento de Receitas Municipais do IPTU para Regiões Metropolitanas",
-        "Projeto ENMU em Ação - Mobilidade Urbana",
-        "Programa Integrado de Arborização e Qualidade do Ar em 2 municípios",
-        "Programa Mutirão Brasil – Radar Brasil + Cidades Amazônicas",
-        "Mobilização El Niño 2026/2027",
-        "Adaptação Climática nas Cidades: Planejamento urbano sensível à água (Water Wise)",
-        "Estudo Tarifa Zero no Transporte Público",
-        "Radar Brasil: Federalismo Climático (RADAR CHAMP)",
-        "Rotas para a Autonomia Econômica das Mulheres",
-        "Mobilidade Urbana: dados pela construção de políticas municipais e metropolitanas no Brasil",
-        "Mais Iguais - FASE 1",
-        "Mais Iguais - FASE 2",
-        "SIMU: Dados de Mobilidade",
-        "ODS",
-        "Projeto GTFS",
-        "Cidades Inovadoras",
-        "Governança Federativa Metropolitana - ANO 1",
-        "Embaixadores da Educação (Legado da Educação)",
-        "Conexão Urbana",
-        "Projeto para Idosos",
-        "Projeto com Ancine",
-        "Estruturas Críticas de Resposta preparadas para Desastres Climáticos",
-        "Transformação Digital em cooperação Trilateral",
-        "Governança em Auditorias de Saúde",
-        "GeoReDUS Patrimônio Histórico e Artístico Nacional – Integração de dados do patrimônio cultural à gestão territorial, urbana e climática dos municípios"
-    ],
-    "Participação Ativa, Missões e Eventos": [
-        "Coalizão para o Desenvolvimento Urbano Sustentável da Amazônia – DUSA (Participação Ativa)",
-        "AdaptaCidades – MMA (Participação Ativa)",
-        "Programa Cidades Verdes Resilientes – PCVR (Participação Ativa)",
-        "Mitiga+ Brasil (Participação Ativa)",
-        "Rede Ruas Completas (Participação Ativa)",
-        "Imersão Técnica Internacional em Cidades Inteligentes, Inovação, Governo Digital, Educação e Desenvolvimento Urbano Sustentável – Estônia, Finlândia e Suécia (Missão)",
-        "Imersão Internacional em PPPs e Concessões para Infraestrutura e Serviços Públicos – Reino Unido e França (Missão)",
-        "Ciclo de Capacitações em Eletromobilidade (Evento)",
-        "Elas Governam (Evento)"
-    ]
-}
+TEMATICAS_FNP = [
+    "Finanças",
+    "Inovação e transformação digital",
+    "Limpeza urbana e manejo de resíduos sólidos",
+    "PPPs e concessões",
+    "Políticas para mulheres",
+    "Adaptação, mitigação e prevenção de desastres",
+    "Desenvolvimento urbano sustentável",
+    "Assuntos sociais",
+    "Cultura",
+    "Proteção de dados",
+    "Planejamento e desenvolvimento urbano",
+    "Mobilidade urbana",
+    "Cidades inteligentes",
+    "Educação",
+    "Saúde",
+    "Procuradores-gerais das capitais e grandes cidades",
+    "CGIBS",
+    "Missões internacionais",
+    "Municípios subfinanciados"
+]
 
 @st.cache_data
 def carregar_dados():
@@ -346,21 +300,20 @@ if municipio_final:
             email = c3.text_input("E-mail *", key=f"email_{municipio_final}_{i}")
             telefone = c4.text_input("Telefone / WhatsApp *", key=f"tel_{municipio_final}_{i}")
 
-            st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta (Marque as opções desejadas)</div>', unsafe_allow_html=True)
+            st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta — Temáticas (Marque as opções desejadas)</div>', unsafe_allow_html=True)
             nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key=f"pauta_nenhum_{municipio_final}_{i}")
 
             itens_marcados = []
-            for idx_cat, (categoria, lista_itens) in enumerate(PAUTAS_FNP.items()):
-                with st.expander(f"📌 {categoria} ({len(lista_itens)} opções)", expanded=(idx_cat == 0)):
-                    col_chk1, col_chk2 = st.columns(2)
-                    for idx_item, item_nome in enumerate(lista_itens):
-                        coluna_atual = col_chk1 if idx_item % 2 == 0 else col_chk2
-                        marcado = coluna_atual.checkbox(
-                            item_nome,
-                            key=f"chk_{municipio_final}_{i}_{idx_cat}_{idx_item}"
-                        )
-                        if marcado:
-                            itens_marcados.append(item_nome)
+            with st.expander(f"📌 Temáticas ({len(TEMATICAS_FNP)} opções)", expanded=True):
+                col_chk1, col_chk2 = st.columns(2)
+                for idx_item, item_nome in enumerate(TEMATICAS_FNP):
+                    coluna_atual = col_chk1 if idx_item % 2 == 0 else col_chk2
+                    marcado = coluna_atual.checkbox(
+                        item_nome,
+                        key=f"chk_{municipio_final}_{i}_{idx_item}"
+                    )
+                    if marcado:
+                        itens_marcados.append(item_nome)
 
             if nenhum_marcado and not itens_marcados:
                 interesse_str = "Nenhum"
