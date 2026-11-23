@@ -307,63 +307,110 @@ if st.session_state.modo_operacao == "consulta":
                     st.success(f"{len(validos)} registro(s) vinculado(s) a **{selecao}** salvo(s) na aba **Cadastros_FNP** com sucesso!")
 
 elif st.session_state.modo_operacao == "novo":
-    st.markdown('<div class="field-header-box">Dados do Novo Município (não listado na base)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="field-header-box">Município/UF (não listado na base)</div>', unsafe_allow_html=True)
+    novo_nome = st.text_input(
+        "Nome do Município/UF *",
+        placeholder="Digite o nome do município e UF (Ex: Palmas/TO)",
+        label_visibility="collapsed",
+        key="input_novo_municipio_nome"
+    )
+
+    st.markdown("---")
+
+    if "num_contatos_novo" not in st.session_state:
+        st.session_state.num_contatos_novo = 1
+
+    titulo_novo_badge = f"📝 Cadastro de Contatos / Representantes — {novo_nome.strip()}" if novo_nome.strip() else "📝 Cadastro de Contatos / Representantes — Novo Município"
+    st.markdown(f'<div class="section-badge">{titulo_novo_badge}</div>', unsafe_allow_html=True)
+    st.caption("Preencha os dados abaixo. Clique em '+ Adicionar outro contato' para incluir mais representantes deste município.")
+
+    col_n_add, col_n_rem, _ = st.columns([1.6, 1.6, 5])
+    with col_n_add:
+        if st.button("➕ Adicionar outro contato", key="btn_add_novo_contato", use_container_width=True):
+            st.session_state.num_contatos_novo += 1
+            st.rerun()
+    with col_n_rem:
+        if st.session_state.num_contatos_novo > 1:
+            if st.button("➖ Remover último", key="btn_rem_novo_contato", use_container_width=True):
+                st.session_state.num_contatos_novo -= 1
+                st.rerun()
 
     with st.form("form_novo_municipio_fnp", clear_on_submit=False):
-        c_novo1, c_novo2 = st.columns([2, 2])
-        c_novo3, c_novo4 = st.columns([1.5, 1.5])
-        c_novo5, c_novo6 = st.columns([2, 2])
+        contatos_novos_temp = []
 
-        novo_nome = c_novo1.text_input("Nome do Município/UF *", placeholder="Ex: Palmas/TO")
-        novo_contato_nome = c_novo2.text_input("Nome completo *")
-        novo_contato_cargo = c_novo3.text_input("Cargo *")
-        novo_contato_setor = c_novo4.text_input("Setor")
-        novo_contato_email = c_novo5.text_input("E-mail *")
-        novo_contato_telefone = c_novo6.text_input("Telefone / WhatsApp *")
+        for i in range(st.session_state.num_contatos_novo):
+            st.markdown(f'<div class="field-header-box">Contato {i + 1}</div>', unsafe_allow_html=True)
+            c1, c2, c3 = st.columns([2, 1.5, 1.5])
+            c4, c5 = st.columns([2, 2])
 
-        st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta — Temáticas (Marque as opções desejadas)</div>', unsafe_allow_html=True)
-        novo_nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key="novo_pauta_nenhum")
+            nome = c1.text_input("Nome completo *", key=f"novo_nome_{i}")
+            cargo = c2.text_input("Cargo *", key=f"novo_cargo_{i}")
+            setor = c3.text_input("Setor", key=f"novo_setor_{i}")
+            email = c4.text_input("E-mail *", key=f"novo_email_{i}")
+            telefone = c5.text_input("Telefone / WhatsApp *", key=f"novo_tel_{i}")
 
-        novo_itens_marcados = []
-        with st.expander(f"📌 Temáticas ({len(TEMATICAS_FNP)} opções)", expanded=True):
-            col_n_chk1, col_n_chk2 = st.columns(2)
-            for idx_item, item_nome in enumerate(TEMATICAS_FNP):
-                coluna_atual = col_n_chk1 if idx_item % 2 == 0 else col_n_chk2
-                marcado = coluna_atual.checkbox(
-                    item_nome,
-                    key=f"novo_chk_{idx_item}"
-                )
-                if marcado:
-                    novo_itens_marcados.append(item_nome)
+            st.markdown('<div class="field-header-box" style="margin-top:8px;">Interesse / Pauta — Temáticas (Marque as opções desejadas)</div>', unsafe_allow_html=True)
+            nenhum_marcado = st.checkbox("Nenhum interesse específico / Apenas acompanhamento geral", key=f"novo_pauta_nenhum_{i}")
 
-        if novo_nenhum_marcado and not novo_itens_marcados:
-            novo_interesse_str = "Nenhum"
-        else:
-            novo_interesse_str = "; ".join(novo_itens_marcados)
+            itens_marcados = []
+            with st.expander(f"📌 Temáticas ({len(TEMATICAS_FNP)} opções)", expanded=True):
+                col_n_chk1, col_n_chk2 = st.columns(2)
+                for idx_item, item_nome in enumerate(TEMATICAS_FNP):
+                    coluna_atual = col_n_chk1 if idx_item % 2 == 0 else col_n_chk2
+                    marcado = coluna_atual.checkbox(
+                        item_nome,
+                        key=f"novo_chk_{i}_{idx_item}"
+                    )
+                    if marcado:
+                        itens_marcados.append(item_nome)
+
+            if nenhum_marcado and not itens_marcados:
+                interesse_str = "Nenhum"
+            else:
+                interesse_str = "; ".join(itens_marcados)
+
+            contatos_novos_temp.append({
+                "nome": nome,
+                "cargo": cargo,
+                "setor": setor,
+                "interesse": interesse_str,
+                "email": email,
+                "telefone": telefone
+            })
+
+            if i < st.session_state.num_contatos_novo - 1:
+                st.markdown("---")
 
         st.write("")
+        st.markdown('<div class="field-header-box">Observação dos Contatos / Município</div>', unsafe_allow_html=True)
         obs_novo_municipio = st.text_area(
             "Observação",
-            placeholder="Digite aqui observações livres sobre este novo município ou contato...",
+            placeholder="Digite aqui observações livres sobre este novo município ou os contatos...",
             height=90,
-            key="obs_novo_mun_input"
+            key="obs_novo_mun_input",
+            label_visibility="collapsed"
         )
 
         salvou_municipio = st.form_submit_button("💾 Salvar Cadastro", type="primary")
 
         if salvou_municipio:
             if not novo_nome.strip():
-                st.warning("Preencha o **Nome do Município/UF** antes de salvar o cadastro.")
+                st.warning("Preencha o **Nome do Município/UF** no campo acima antes de salvar.")
             else:
-                salvar_registro_aba("Novos_Municipios", {
-                    "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
-                    "Município/UF": novo_nome.strip(),
-                    "Nome": novo_contato_nome.strip(),
-                    "Cargo": novo_contato_cargo.strip(),
-                    "Setor": novo_contato_setor.strip(),
-                    "Interesse / Pauta": novo_interesse_str,
-                    "E-mail": novo_contato_email.strip(),
-                    "Telefone": novo_contato_telefone.strip(),
-                    "Observação": obs_novo_municipio.strip()
-                })
-                st.success(f"Cadastro do município **{novo_nome.strip()}** salvo na aba **Novos_Municipios** com sucesso!")
+                validos = [c for c in contatos_novos_temp if c["nome"].strip() != ""]
+                if not validos:
+                    st.warning("Preencha pelo menos o Nome de um contato antes de salvar.")
+                else:
+                    for c in validos:
+                        salvar_registro_aba("Novos_Municipios", {
+                            "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                            "Município/UF": novo_nome.strip(),
+                            "Nome": c["nome"].strip(),
+                            "Cargo": c["cargo"].strip(),
+                            "Setor": c["setor"].strip(),
+                            "Interesse / Pauta": c["interesse"],
+                            "E-mail": c["email"].strip(),
+                            "Telefone": c["telefone"].strip(),
+                            "Observação": obs_novo_municipio.strip()
+                        })
+                    st.success(f"{len(validos)} registro(s) vinculado(s) a **{novo_nome.strip()}** salvo(s) na aba **Novos_Municipios** com sucesso!")
