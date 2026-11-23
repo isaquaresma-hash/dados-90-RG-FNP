@@ -90,14 +90,7 @@ COL_RANKING = df.columns[2]
 COL_STATUS = df.columns[3]
 COL_PARTICIPACAO = df.columns[4]
 
-COLUNAS_CONTATOS = [
-    "Data/Hora", "Tipo de Registro", "Origem", "Município/UF",
-    str(COL_TERMO), str(COL_RANKING), str(COL_STATUS), str(COL_PARTICIPACAO),
-    "Nome", "Cargo", "Setor", "Interesse / Pauta",
-    "E-mail", "Telefone", "Observação Contatos"
-]
-
-COLUNAS_NOVOS_MUNICIPIOS = [
+COLUNAS_PADRAO = [
     "Data/Hora", "Município/UF", "Nome", "Cargo", "Setor",
     "Interesse / Pauta", "E-mail", "Telefone", "Observação"
 ]
@@ -115,24 +108,19 @@ def conectar_planilha():
     cliente = gspread.authorize(credenciais)
     return cliente.open_by_url(st.secrets["sheet_url"])
 
-def obter_aba(nome_aba, colunas_cabecalho):
+def obter_aba(nome_aba):
     planilha = conectar_planilha()
     try:
         aba = planilha.worksheet(nome_aba)
     except gspread.WorksheetNotFound:
-        aba = planilha.add_worksheet(title=nome_aba, rows=1000, cols=len(colunas_cabecalho))
+        aba = planilha.add_worksheet(title=nome_aba, rows=1000, cols=len(COLUNAS_PADRAO))
     if not aba.row_values(1):
-        aba.append_row(colunas_cabecalho)
+        aba.append_row(COLUNAS_PADRAO)
     return aba
 
-def salvar_contato_base(novo_registro):
-    aba = obter_aba("Cadastros_FNP", COLUNAS_CONTATOS)
-    linha = [str(novo_registro.get(col, "")) for col in COLUNAS_CONTATOS]
-    aba.append_row(linha, value_input_option="USER_ENTERED")
-
-def salvar_novo_municipio(novo_registro):
-    aba = obter_aba("Novos_Municipios", COLUNAS_NOVOS_MUNICIPIOS)
-    linha = [str(novo_registro.get(col, "")) for col in COLUNAS_NOVOS_MUNICIPIOS]
+def salvar_registro_aba(nome_aba, novo_registro):
+    aba = obter_aba(nome_aba)
+    linha = [str(novo_registro.get(col, "")) for col in COLUNAS_PADRAO]
     aba.append_row(linha, value_input_option="USER_ENTERED")
 
 if os.path.exists("imagem.pdf.png"):
@@ -305,22 +293,16 @@ if st.session_state.modo_operacao == "consulta":
                     st.warning("Preencha pelo menos o Nome do contato antes de salvar.")
                 else:
                     for c in validos:
-                        salvar_contato_base({
+                        salvar_registro_aba("Cadastros_FNP", {
                             "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
-                            "Tipo de Registro": "Contato / Representante",
-                            "Origem": "Base 90ª RG",
                             "Município/UF": selecao,
-                            str(COL_TERMO): val_termo,
-                            str(COL_RANKING): val_ranking,
-                            str(COL_STATUS): val_status,
-                            str(COL_PARTICIPACAO): val_participacao,
                             "Nome": c["nome"],
                             "Cargo": c["cargo"],
                             "Setor": c["setor"],
                             "Interesse / Pauta": c["interesse"],
                             "E-mail": c["email"],
                             "Telefone": c["telefone"],
-                            "Observação Contatos": observacao_contatos.strip()
+                            "Observação": observacao_contatos.strip()
                         })
                     st.success(f"{len(validos)} registro(s) vinculado(s) a **{selecao}** salvo(s) na aba **Cadastros_FNP** com sucesso!")
 
@@ -373,7 +355,7 @@ elif st.session_state.modo_operacao == "novo":
             if not novo_nome.strip():
                 st.warning("Preencha o **Nome do Município/UF** antes de salvar o cadastro.")
             else:
-                salvar_novo_municipio({
+                salvar_registro_aba("Novos_Municipios", {
                     "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
                     "Município/UF": novo_nome.strip(),
                     "Nome": novo_contato_nome.strip(),
