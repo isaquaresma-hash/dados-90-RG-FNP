@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. CSS com a cor exata do fundo (#00243d) e estilo dos blocos
+# 2. CSS com a cor exata do fundo (#00243d) e alto contraste nos blocos
 st.markdown("""
 <style>
     [data-testid="stAppViewContainer"] {
@@ -160,19 +160,40 @@ st.markdown("""
         font-size: 0.9rem !important;
     }
     div[data-testid="stCheckbox"] label p {
-        color: #f1f5f9 !important;
+        color: #f8fafc !important;
         font-weight: 400 !important;
-        font-size: 0.86rem !important;
+        font-size: 0.88rem !important;
     }
-    details[data-testid="stExpander"] {
-        background-color: #0d3b5e !important;
-        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    /* Alto contraste nos blocos expansíveis (Fóruns, Projetos, Missões) */
+    details[data-testid="stExpander"],
+    div[data-testid="stExpander"] {
+        background-color: #164266 !important;
+        border: 1px solid rgba(255, 255, 255, 0.35) !important;
         border-radius: 8px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 10px !important;
     }
-    details[data-testid="stExpander"] summary p {
+    details[data-testid="stExpander"] summary,
+    div[data-testid="stExpander"] summary {
+        background-color: #1e527d !important;
         color: #ffffff !important;
+        border-radius: 7px !important;
+        padding: 10px 14px !important;
+    }
+    details[data-testid="stExpander"] summary:hover,
+    div[data-testid="stExpander"] summary:hover {
+        background-color: #256396 !important;
+    }
+    details[data-testid="stExpander"] summary *,
+    div[data-testid="stExpander"] summary * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
         font-weight: 700 !important;
+        font-size: 0.96rem !important;
+    }
+    details[data-testid="stExpander"] > div,
+    div[data-testid="stExpander"] > div {
+        background-color: #0e3352 !important;
+        padding: 12px 16px !important;
     }
     .stCaption p {
         color: #cbd5e1 !important;
@@ -270,7 +291,6 @@ def salvar_registro_persistente(novo_registro):
     df_export = pd.DataFrame(st.session_state.registros_salvos)
     df_export.to_excel(ARQUIVO_SAIDA_EXCEL, index=False, sheet_name="Cadastros_FNP")
 
-# Carrega registros já salvos no Excel local caso o arquivo exista
 if "registros_salvos" not in st.session_state:
     if os.path.exists(ARQUIVO_SAIDA_EXCEL):
         try:
