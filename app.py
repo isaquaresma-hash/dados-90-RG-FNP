@@ -307,21 +307,10 @@ if st.session_state.modo_operacao == "consulta":
                     st.success(f"{len(validos)} registro(s) vinculado(s) a **{selecao}** salvo(s) na aba **Cadastros_FNP** com sucesso!")
 
 elif st.session_state.modo_operacao == "novo":
-    st.markdown('<div class="field-header-box">Município/UF (não listado na base)</div>', unsafe_allow_html=True)
-    novo_nome = st.text_input(
-        "Nome do Município/UF *",
-        placeholder="Digite o nome do município e UF (Ex: Palmas/TO)",
-        label_visibility="collapsed",
-        key="input_novo_municipio_nome"
-    )
-
-    st.markdown("---")
-
     if "num_contatos_novo" not in st.session_state:
         st.session_state.num_contatos_novo = 1
 
-    titulo_novo_badge = f"📝 Cadastro de Contatos / Representantes — {novo_nome.strip()}" if novo_nome.strip() else "📝 Cadastro de Contatos / Representantes — Novo Município"
-    st.markdown(f'<div class="section-badge">{titulo_novo_badge}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-badge">📝 Cadastro de Contatos / Representantes — Novo Município</div>', unsafe_allow_html=True)
     st.caption("Preencha os dados abaixo. Clique em '+ Adicionar outro contato' para incluir mais representantes deste município.")
 
     col_n_add, col_n_rem, _ = st.columns([1.6, 1.6, 5])
@@ -336,6 +325,15 @@ elif st.session_state.modo_operacao == "novo":
                 st.rerun()
 
     with st.form("form_novo_municipio_fnp", clear_on_submit=False):
+        st.markdown('<div class="field-header-box">📍 Município/UF (não listado na base)</div>', unsafe_allow_html=True)
+        novo_nome = st.text_input(
+            "Nome do Município/UF *",
+            placeholder="Digite o nome do município e UF (Ex: Palmas/TO)",
+            label_visibility="collapsed",
+            key="input_novo_municipio_nome"
+        )
+
+        st.write("")
         contatos_novos_temp = []
 
         for i in range(st.session_state.num_contatos_novo):
@@ -395,7 +393,7 @@ elif st.session_state.modo_operacao == "novo":
 
         if salvou_municipio:
             if not novo_nome.strip():
-                st.warning("Preencha o **Nome do Município/UF** no campo acima antes de salvar.")
+                st.warning("Preencha o **Município/UF** antes de salvar.")
             else:
                 validos = [c for c in contatos_novos_temp if c["nome"].strip() != ""]
                 if not validos:
