@@ -166,7 +166,6 @@ st.markdown("""
         font-weight: 400 !important;
         font-size: 0.88rem !important;
     }
-    /* Alto contraste nos blocos expansíveis (Fóruns, Projetos, Missões) */
     details[data-testid="stExpander"],
     div[data-testid="stExpander"] {
         background-color: #164266 !important;
@@ -192,88 +191,4 @@ st.markdown("""
         font-weight: 700 !important;
         font-size: 0.96rem !important;
     }
-    details[data-testid="stExpander"] > div,
-    div[data-testid="stExpander"] > div {
-        background-color: #0e3352 !important;
-        padding: 12px 16px !important;
-    }
-    .stCaption p {
-        color: #cbd5e1 !important;
-    }
-    h3 {
-        color: #ffffff !important;
-    }
-    hr {
-        border-color: rgba(255, 255, 255, 0.15) !important;
-    }
-    [data-testid="stForm"] {
-        background-color: #09304f;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 12px;
-        padding: 20px;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Catálogo unificado de Interesses / Pautas (Listagem + Fóruns Temáticos FNP)
-PAUTAS_FNP = {
-    "Fóruns Temáticos e Comissões": [
-        "Fórum Nacional de Secretários Municipais de Fazenda e Finanças",
-        "Fórum de Cultura das Capitais e Municípios Associados (FNC)",
-        "Fórum Inova Cidades (Inovação e Transformação Digital)",
-        "Fórum de Proteção de Dados Pessoais dos Municípios (LGPD)",
-        "Fórum de Gestores de Limpeza Urbana e Manejo de Resíduos Sólidos",
-        "Fórum Unicidades (Planejamento e Desenvolvimento Urbano)",
-        "Fórum de Dirigentes Municipais de PPPs e Concessões",
-        "Fórum Nacional de Procuradores-Gerais das Capitais e Grandes Cidades (FNPGC)",
-        "Fórum Nacional de Gestoras Municipais de Políticas para Mulheres",
-        "Fórum Nacional de Secretários e Dirigentes de Mobilidade Urbana",
-        "Fórum de Inovação e Tecnologia",
-        "Fórum de Cidades Inteligentes",
-        "Comissão Permanente de Adaptação, Mitigação e Prevenção de Desastres – CAMP",
-        "Comissão de Cidades Amazônicas – CCA",
-        "Comissão Permanente de Desenvolvimento Urbano Sustentável – CDUS",
-        "Comissão Permanente de Educação",
-        "Comissão de Assuntos Sociais",
-        "Comissão de Saúde",
-        "Coalizão de Municípios pela Redução de Mortes",
-        "CASD"
-    ],
-    "Projetos FNP": [
-        "Programa Integrado de Transição Tributária para Municípios",
-        "Plataforma de Governança CGIBS - Conecta IBS",
-        "Programa Integrado em COSIP, PPPs e Concessões",
-        "Plataforma GeoReDus - Dados geoespaciais para todos os municípios brasileiros",
-        "Plataforma IFEM - Circuito de Eventos Regionais de Inteligência em Finanças Públicas Municipais",
-        "Programa Piloto de Atualização Cadastral Imobiliária e Incremento de Receitas Municipais do IPTU para Regiões Metropolitanas",
-        "Projeto ENMU em Ação - Mobilidade Urbana",
-        "Programa Integrado de Arborização e Qualidade do Ar em 2 municípios",
-        "Programa Mutirão Brasil – Radar Brasil + Cidades Amazônicas",
-        "Mobilização El Niño 2026/2027",
-        "Adaptação Climática nas Cidades: Planejamento urbano sensível à água (Water Wise)",
-        "Estudo Tarifa Zero no Transporte Público",
-        "Radar Brasil: Federalismo Climático (RADAR CHAMP)",
-        "Rotas para a Autonomia Econômica das Mulheres",
-        "Mobilidade Urbana: dados pela construção de políticas municipais e metropolitanas no Brasil",
-        "Mais Iguais - FASE 1",
-        "Mais Iguais - FASE 2",
-        "SIMU: Dados de Mobilidade",
-        "ODS",
-        "Projeto GTFS",
-        "Cidades Inovadoras",
-        "Governança Federativa Metropolitana - ANO 1",
-        "Embaixadores da Educação (Legado da Educação)",
-        "Conexão Urbana",
-        "Projeto para Idosos",
-        "Projeto com Ancine",
-        "Estruturas Críticas de Resposta preparadas para Desastres Climáticos",
-        "Transformação Digital em cooperação Trilateral",
-        "Governança em Auditorias de Saúde",
-        "GeoReDUS Patrimônio Histórico e Artístico Nacional – Integração de dados do patrimônio cultural à gestão territorial, urbana e climática dos municípios"
-    ],
-    "Participação Ativa, Missões e Eventos": [
-        "Coalizão para o Desenvolvimento Urbano Sustentável da Amazônia – DUSA (Participação Ativa)",
-        "AdaptaCidades – MMA (Participação Ativa)",
-        "Programa Cidades Verdes Resilientes – PCVR (Participação Ativa)",
-        "Mitiga+ Brasil (Participação Ativa)",
-        "Rede Ruas Completas (Participação
+    details[data-testid
