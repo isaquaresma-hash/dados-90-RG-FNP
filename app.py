@@ -217,14 +217,21 @@ elif st.session_state.modo_operacao == "novo":
     st.markdown('<div class="field-header-box">Dados do Novo Município (não listado na base)</div>', unsafe_allow_html=True)
 
     with st.form("form_novo_municipio_fnp", clear_on_submit=False):
-        c_novo1, c_novo2 = st.columns([2, 1.5])
-        c_novo3, c_novo4 = st.columns([1.5, 2])
+        c_novo1, c_novo2 = st.columns([2, 2])
+        c_novo3, c_novo4 = st.columns([1.5, 1.5])
+        c_novo5, c_novo6 = st.columns([2, 2])
 
         novo_nome = c_novo1.text_input("Nome do Município/UF *", placeholder="Ex: Palmas/TO")
-        val_ranking = c_novo2.text_input(str(COL_RANKING), value="Não filiado / Novo")
-        val_status = c_novo3.text_input(str(COL_STATUS), value="Novo Cadastro")
-        val_participacao = c_novo4.text_input(str(COL_PARTICIPACAO), placeholder="Ex: Reunião Geral / Fóruns")
+        novo_contato_nome = c_novo2.text_input("Nome completo *")
+        novo_contato_cargo = c_novo3.text_input("Cargo *")
+        novo_contato_setor = c_novo4.text_input("Setor")
+        novo_contato_email = c_novo5.text_input("E-mail *")
+        novo_contato_telefone = c_novo6.text_input("Telefone / WhatsApp *")
+
         val_termo = "Não informado"
+        val_ranking = "Não filiado / Novo"
+        val_status = "Novo Cadastro"
+        val_participacao = "Não informado"
 
         obs_novo_municipio = st.text_area(
             "Observação do Município",
@@ -249,12 +256,12 @@ elif st.session_state.modo_operacao == "novo":
                     str(COL_STATUS): val_status,
                     str(COL_PARTICIPACAO): val_participacao,
                     "Observação Município": obs_novo_municipio.strip(),
-                    "Nome": "",
-                    "Cargo": "",
-                    "Setor": "",
+                    "Nome": novo_contato_nome.strip(),
+                    "Cargo": novo_contato_cargo.strip(),
+                    "Setor": novo_contato_setor.strip(),
                     "Interesse / Pauta": "",
-                    "E-mail": "",
-                    "Telefone": "",
+                    "E-mail": novo_contato_email.strip(),
+                    "Telefone": novo_contato_telefone.strip(),
                     "Observação Contatos": ""
                 })
                 st.success(f"Cadastro do município **{novo_nome.strip()}** salvo na planilha com sucesso!")
